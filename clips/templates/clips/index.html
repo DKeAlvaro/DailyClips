@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'clips/css/styles.css' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to DailyClips</title>
+</head>
+<body>
+    <div class="container">
+        <img class="logo" src="{% static 'clips/images/logo.png' %}" alt="DailyClip Logo">
+        <video class="responsive-video" controls>
+            <source src="{% static 'clips/videos/did-know-you-mix-gasoline-frozen-orange-juice-can-make-napalm-s1.mp4' %}" >
+            Your browser does not support the video tag.
+        </video>
+        <div class="button-container">
+            <a href="#" class="btn record-audio" id="record-audio">Your turn!</a>
+            <a href="{% url 'your_stats' %}" class="btn">View Your Stats</a>
+        </div>    
+    </div>
+    <script src="{% static 'clips/js/record_audio.js' %}"></script>
+</body>
+</html>

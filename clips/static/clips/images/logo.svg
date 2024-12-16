@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 400 120">  
+  <!-- Icon: Stylized Paperclip -->
+  <path d="M80 30a20 20 0 0 1 40 0v40a20 20 0 0 1-40 0v-30a10 10 0 0 1 20 0v30a5 5 0 0 0 10 0V30a20 20 0 0 0-40 0v40a30 30 0 0 0 60 0v-30" fill="none" stroke="#007bff" stroke-width="8" />
+
+  <!-- Text: "DailyClips" -->
+  <text x="150" y="75" font-family="Arial, sans-serif" font-size="48" fill="#333" font-weight="bold">DailyClips</text>
+</svg>
