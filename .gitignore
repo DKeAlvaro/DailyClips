@@ -1,0 +1,38 @@
+# Python bytecode files
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+env/
+
+# Django specific
+db.sqlite3
+*.log
+
+# Static files
+/static/
+*.css.map
+*.js.map
+
+# Media files (videos, images uploaded by users)
+media/
+
+# Local environment settings
+.env
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*~
+
+# Compiled files and caches
+*.cache
+*.egg-info/
+dist/
+build/
+
+# System files
+.DS_Store
+Thumbs.db
