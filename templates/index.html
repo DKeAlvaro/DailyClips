@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Clips</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="wave-container">
+        
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+    </div>
+    <div class="page-container">
+
+        <main class="main-content">
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 400 120" class="active logo" id="animated-svg">
+                <style>
+                    .svg-elem-1 {
+                        stroke-dashoffset: 541.9140625px;
+                        stroke-dasharray: 541.9140625px;
+                        -webkit-transition: stroke-dashoffset 1s cubic-bezier(0.47, 0, 0.745, 0.715) 0s;
+                                transition: stroke-dashoffset 1s cubic-bezier(0.47, 0, 0.745, 0.715) 0s;
+                    }
+                    svg.active .svg-elem-1 {
+                        stroke-dashoffset: 0;
+                    }
+                </style>
+                <path d="M80 30a20 20 0 0 1 40 0v40a20 20 0 0 1-40 0v-30a10 10 0 0 1 20 0v30a5 5 0 0 0 10 0V30a20 20 0 0 0-40 0v40a30 30 0 0 0 60 0v-30" fill="none" stroke="#007bff" stroke-width="8" class="svg-elem-1"></path>
+                <text x="150" y="75" font-family="Arial, sans-serif" font-size="48" fill="#ffff" font-weight="bold">DailyClips</text>
+            </svg>
+            <script>
+                const svg = document.getElementById('animated-svg');
+                svg.addEventListener('click', () => {
+                    svg.classList.toggle('active');
+                });
+            </script>
+            {% if video_path %}
+            <div class="video-container">
+                {% if current_index > 0 %}
+                <a href="/?video={{ current_index - 1 }}" class="video-nav prev">
+                    <span class="arrow">←</span>
+                </a>
+                {% endif %}
+
+                {% if current_index < total_videos - 1 %}
+                <a href="/?video={{ current_index + 1 }}" class="video-nav next">
+                    <span class="arrow">→</span>
+                </a>
+                {% endif %}
+
+                <video id="mainVideo" preload="metadata">
+                    <source src="{{ url_for('static', filename=video_path) }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="controls desktop-controls">
+                    <button class="play-pause-btn">Play</button>
+                    <button class="record-btn" style="display: none;">Record</button>
+                </div>
+            </div>
+            <div class="clip-legend">
+                Fight Club (1999) - Don't Want to Take a Leap of Faith
+            </div>
+            <div class="svg-container">
+                <img src="{{ url_for('static', filename='images/listen-then-repeat.svg') }}" alt="Listen then Repeat" class="floating-svg">
+            </div>
+            <div class="controls mobile-controls">
+                <button class="play-pause-btn">Play</button>
+                <button class="record-btn" style="display: none;">Record</button>
+            </div>
+            {% else %}
+            <p>No video files found in the static/videos directory.</p>
+            {% endif %}
+        </main>
+    </div>
+    <script>
+        const subtitlesData = {{ subtitles|tojson|safe }};
+    </script>
+    <script src="{{ url_for('static', filename='js/video-controls.js') }}"></script>
+</body>
+</html>

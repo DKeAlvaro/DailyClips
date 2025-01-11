@@ -1,0 +1,9 @@
+flask==3.0.2
+torch==2.0.1
+torchaudio==2.0.2
+numpy==1.24.3 
+transformers
+epitran
+eng_to_ipa
+dtwalign
+gunicorn==21.2.0
