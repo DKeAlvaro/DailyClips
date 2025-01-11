@@ -7,4 +7,5 @@ transformers==4.36.2
 epitran==1.24
 eng-to-ipa==0.0.2
 dtwalign==0.1.1
+soundfile==0.12.1
 gunicorn==21.2.0
