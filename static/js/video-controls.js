@@ -205,11 +205,18 @@ window.addEventListener('load', () => {
     }
 
     async initializeRecording() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            audio: {
-                channelCount: 1,
-                sampleRate: 16000,
+        // Don't request microphone access immediately
+        this.recordBtn.addEventListener('click', () => this.toggleRecording());
+        this.mobileRecordBtn.addEventListener('click', () => this.toggleRecording());
+    }
+
+    async startRecording() {
+        try {
+            // Request microphone access when starting recording
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    channelCount: 1,
+                    sampleRate: 16000,
                     echoCancellation: true,
                     noiseSuppression: true,
                     autoGainControl: true
@@ -225,18 +232,42 @@ window.addEventListener('load', () => {
                 this.audioChunks.push(event.data);
             };
             
-            this.mediaRecorder.onstop = () => this.processRecording();
-            
-            // Set up record buttons
-            this.recordBtn.addEventListener('click', () => this.toggleRecording());
-            this.mobileRecordBtn.addEventListener('click', () => this.toggleRecording());
+            this.mediaRecorder.onstop = () => {
+                // Stop all tracks when recording ends
+                stream.getTracks().forEach(track => track.stop());
+                this.processRecording();
+            };
+
+            this.audioChunks = [];
+            this.mediaRecorder.start();
+            this.isRecording = true;
+            this.recordBtn.textContent = 'Stop Recording';
+            this.mobileRecordBtn.textContent = 'Stop Recording';
+            this.recordBtn.classList.add('recording');
+            this.mobileRecordBtn.classList.add('recording');
             
         } catch (error) {
-            console.error('Error initializing recording:', error);
+            console.error('Error accessing microphone:', error);
             this.recordBtn.textContent = 'Microphone Error';
             this.mobileRecordBtn.textContent = 'Microphone Error';
             this.recordBtn.disabled = true;
             this.mobileRecordBtn.disabled = true;
+        }
+    }
+
+    stopRecording() {
+        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+            this.mediaRecorder.stop();
+            this.isRecording = false;
+            this.showLoadingSpinner();
+        }
+    }
+
+    toggleRecording() {
+        if (!this.isRecording) {
+            this.startRecording();
+        } else {
+            this.stopRecording();
         }
     }
 
@@ -311,30 +342,6 @@ window.addEventListener('load', () => {
         
         this.loadingSpinner.style.display = 'block';
         this.mobileLoadingSpinner.style.display = 'block';
-    }
-
-    toggleRecording() {
-        if (!this.isRecording) {
-            this.startRecording();
-        } else {
-            this.stopRecording();
-        }
-    }
-
-    startRecording() {
-        this.audioChunks = [];
-        this.mediaRecorder.start();
-        this.isRecording = true;
-        this.recordBtn.textContent = 'Stop Recording';
-        this.mobileRecordBtn.textContent = 'Stop Recording';
-        this.recordBtn.classList.add('recording');
-        this.mobileRecordBtn.classList.add('recording');
-    }
-
-    stopRecording() {
-        this.mediaRecorder.stop();
-        this.isRecording = false;
-        this.showLoadingSpinner();
     }
 
     async processRecording() {
