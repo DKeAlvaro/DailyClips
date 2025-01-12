@@ -7,8 +7,6 @@ class VideoController {
         this.mobilePlayPauseBtn = document.querySelector('.mobile-controls .play-pause-btn');
         this.mobileRecordBtn = document.querySelector('.mobile-controls .record-btn');
         this.currentSubtitleIndex = -1;
-        this.mediaRecorder = null;
-        this.audioChunks = [];
         this.isRecording = false;
         this.hasStarted = false;
         this.isTransitioning = false;
@@ -31,7 +29,8 @@ class VideoController {
         this.coinSound = new Audio('/static/sound/coin.mp3');
         this.middleSound = new Audio('/static/sound/middle.mp3');
         this.goodSound = new Audio('/static/sound/good.mp3');
-        [this.wrongSound, this.coinSound, this.middleSound, this.goodSound].forEach(sound => {
+        this.finishSound = new Audio('/static/sound/finish_sound.wav');
+        [this.wrongSound, this.coinSound, this.middleSound, this.goodSound, this.finishSound].forEach(sound => {
             sound.volume = 0.5;
         });
 
@@ -41,16 +40,6 @@ class VideoController {
 
         // Add this to log subtitles data when controller is initialized
         console.log('Loaded subtitles:', subtitlesData);
-        
-        // Optional: Log each subtitle in a more readable format
-        // console.log('Subtitle breakdown:');
-        // subtitlesData.forEach((subtitle, index) => {
-        //     console.log(`Subtitle ${index + 1}:`);
-        //     console.log(`  Start: ${subtitle.start}ms (${this.formatTime(subtitle.start)})`);
-        //     console.log(`  End: ${subtitle.end}ms (${this.formatTime(subtitle.end)})`);
-        //     console.log(`  Text: "${subtitle.text}"`);
-        //     console.log('---');
-        // });
     }
 
     initializeControls() {
@@ -104,6 +93,8 @@ class VideoController {
                     const chartContainer = document.querySelector('.chart-container');
                     if (chartContainer) {
                         chartContainer.classList.remove('hidden');
+                        // Play finish sound when chart appears
+                        this.finishSound.play();
                     }
                 })
                 .catch(error => {
@@ -114,6 +105,8 @@ class VideoController {
                     const chartContainer = document.querySelector('.chart-container');
                     if (chartContainer) {
                         chartContainer.classList.remove('hidden');
+                        // Play finish sound when chart appears
+                        this.finishSound.play();
                     }
                 });
             }
@@ -168,7 +161,6 @@ window.addEventListener('load', () => {
             this.currentSubtitleIndex = -1;
             this.hasStarted = false;
             this.isRecording = false;
-            this.audioChunks = [];
             this.accuracies = [];  // Reset accuracies array
             
             // Remove results section if it exists
@@ -212,39 +204,33 @@ window.addEventListener('load', () => {
 
     async startRecording() {
         try {
-            // Request microphone access when starting recording
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    channelCount: 1,
-                    sampleRate: 16000,
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true
-                }
-            });
-            
-            this.mediaRecorder = new MediaRecorder(stream, {
-                mimeType: 'audio/webm;codecs=opus',
-                audioBitsPerSecond: 128000
-            });
-            
-            this.mediaRecorder.ondataavailable = (event) => {
-                this.audioChunks.push(event.data);
-            };
-            
-            this.mediaRecorder.onstop = () => {
-                // Stop all tracks when recording ends
-                stream.getTracks().forEach(track => track.stop());
-                this.processRecording();
-            };
-
-            this.audioChunks = [];
-            this.mediaRecorder.start();
             this.isRecording = true;
             this.recordBtn.textContent = 'Stop Recording';
             this.mobileRecordBtn.textContent = 'Stop Recording';
             this.recordBtn.classList.add('recording');
             this.mobileRecordBtn.classList.add('recording');
+
+            // Process the current subtitle text with Web Speech API
+            try {
+                const results = await this.asrProcessor.processAudio(
+                    null, // We don't need the blob anymore
+                    subtitlesData[this.currentSubtitleIndex].text
+                );
+                
+                if (results.success) {
+                    console.log('ASR Results:', results);
+                    this.showResults(results.results);
+                } else {
+                    console.error('Error in results:', results.error);
+                    this.showRecordButton(); // Allow retry
+                }
+            } catch (error) {
+                console.error('Speech recognition error:', error);
+                this.showRecordButton(); // Allow retry
+                // Show error message to user
+                this.recordBtn.textContent = 'Try Again';
+                this.mobileRecordBtn.textContent = 'Try Again';
+            }
             
         } catch (error) {
             console.error('Error accessing microphone:', error);
@@ -256,9 +242,9 @@ window.addEventListener('load', () => {
     }
 
     stopRecording() {
-        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
-            this.mediaRecorder.stop();
+        if (this.isRecording) {
             this.isRecording = false;
+            this.asrProcessor.stopListening();
             this.showLoadingSpinner();
         }
     }
@@ -313,6 +299,8 @@ window.addEventListener('load', () => {
         this.mobileRecordBtn.textContent = 'Record';
         this.recordBtn.classList.remove('recording');
         this.mobileRecordBtn.classList.remove('recording');
+        this.recordBtn.disabled = false;
+        this.mobileRecordBtn.disabled = false;
     }
 
     showPlayButton() {
@@ -342,136 +330,6 @@ window.addEventListener('load', () => {
         
         this.loadingSpinner.style.display = 'block';
         this.mobileLoadingSpinner.style.display = 'block';
-    }
-
-    async processRecording() {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-        
-        try {
-            // Convert webm to wav
-            const arrayBuffer = await audioBlob.arrayBuffer();
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)({
-                sampleRate: 16000  // Ensure consistent sample rate
-            });
-            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-            
-            // Create WAV file
-            const wavBlob = await this.audioBufferToWav(audioBuffer);
-            
-            try {
-                console.log('Processing audio with client-side ASR...');
-                const results = await this.asrProcessor.processAudio(
-                    wavBlob,
-                    subtitlesData[this.currentSubtitleIndex].text
-                );
-                
-                if (results.success) {
-                    console.log('ASR Results:', results);
-                    this.showResults(results.results);
-                } else {
-                    console.error('Error in results:', results.error);
-                    this.showRecordButton(); // Allow retry
-                }
-                
-            } catch (error) {
-                console.error('Error processing audio:', error);
-                this.showRecordButton(); // Allow retry
-            }
-            
-        } catch (error) {
-            console.error('Error converting audio:', error);
-            this.showRecordButton(); // Allow retry
-        }
-    }
-
-    async audioBufferToWav(buffer) {
-    const numChannels = 1;
-        const sampleRate = 16000;
-    const format = 1; // PCM
-    const bitDepth = 16;
-    
-        const dataLength = buffer.length * numChannels * (bitDepth / 8);
-        const arrayBuffer = new ArrayBuffer(44 + dataLength);
-        const view = new DataView(arrayBuffer);
-    
-    // WAV header
-        const writeString = (view, offset, string) => {
-            for (let i = 0; i < string.length; i++) {
-                view.setUint8(offset + i, string.charCodeAt(i));
-            }
-        };
-        
-    writeString(view, 0, 'RIFF');
-    view.setUint32(4, 36 + dataLength, true);
-    writeString(view, 8, 'WAVE');
-    writeString(view, 12, 'fmt ');
-    view.setUint32(16, 16, true);
-    view.setUint16(20, format, true);
-    view.setUint16(22, numChannels, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * numChannels * (bitDepth / 8), true);
-    view.setUint16(32, numChannels * (bitDepth / 8), true);
-    view.setUint16(34, bitDepth, true);
-    writeString(view, 36, 'data');
-    view.setUint32(40, dataLength, true);
-    
-    // Write audio data
-        const data = buffer.getChannelData(0);
-    let offset = 44;
-        for (let i = 0; i < data.length; i++) {
-            const sample = Math.max(-1, Math.min(1, data[i]));
-            view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
-        offset += 2;
-    }
-    
-        return new Blob([arrayBuffer], { type: 'audio/wav' });
-    }
-
-    setup3DEffect() {
-        this.videoContainer.addEventListener('mousemove', (e) => {
-            if (this.isTransitioning) return;
-
-            const rect = this.videoContainer.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            // Calculate rotation based on mouse position (reduced from 10 to 5 degrees)
-            const xRotation = ((y - rect.height / 2) / rect.height) * 5;
-            const yRotation = ((x - rect.width / 2) / rect.width) * 5;
-            
-            // Apply smooth transform (reduced scale from 1.02 to 1.01)
-            this.videoContainer.style.transform = `
-                perspective(1000px)
-                rotateX(${-xRotation}deg)
-                rotateY(${yRotation}deg)
-                scale3d(1.01, 1.01, 1.01)
-            `;
-        });
-
-        // Reset transform when mouse leaves
-        this.videoContainer.addEventListener('mouseleave', () => {
-            if (this.isTransitioning) return;
-            this.videoContainer.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
-        });
-
-        // Add transition class for smoother effect
-        this.videoContainer.addEventListener('mouseenter', () => {
-            if (this.isTransitioning) return;
-            this.videoContainer.style.transition = 'transform 0.1s ease';
-        });
-
-        this.videoContainer.addEventListener('mouseleave', () => {
-            if (this.isTransitioning) return;
-            this.videoContainer.style.transition = 'transform 0.3s ease';
-        });
-    }
-
-    // Add this helper method to format milliseconds into readable time
-    formatTime(ms) {
-        const seconds = Math.floor(ms / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-        return `${hours}:${String(minutes % 60).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}.${String(ms % 1000).padStart(3, '0')}`;
     }
 
     showResults(results) {
@@ -542,6 +400,45 @@ window.addEventListener('load', () => {
 
         // Show play button
         this.showPlayButton();
+    }
+
+    setup3DEffect() {
+        this.videoContainer.addEventListener('mousemove', (e) => {
+            if (this.isTransitioning) return;
+
+            const rect = this.videoContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Calculate rotation based on mouse position (reduced from 10 to 5 degrees)
+            const xRotation = ((y - rect.height / 2) / rect.height) * 5;
+            const yRotation = ((x - rect.width / 2) / rect.width) * 5;
+            
+            // Apply smooth transform (reduced scale from 1.02 to 1.01)
+            this.videoContainer.style.transform = `
+                perspective(1000px)
+                rotateX(${-xRotation}deg)
+                rotateY(${yRotation}deg)
+                scale3d(1.01, 1.01, 1.01)
+            `;
+        });
+
+        // Reset transform when mouse leaves
+        this.videoContainer.addEventListener('mouseleave', () => {
+            if (this.isTransitioning) return;
+            this.videoContainer.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+        });
+
+        // Add transition class for smoother effect
+        this.videoContainer.addEventListener('mouseenter', () => {
+            if (this.isTransitioning) return;
+            this.videoContainer.style.transition = 'transform 0.1s ease';
+        });
+
+        this.videoContainer.addEventListener('mouseleave', () => {
+            if (this.isTransitioning) return;
+            this.videoContainer.style.transition = 'transform 0.3s ease';
+        });
     }
 }
 

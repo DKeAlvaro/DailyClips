@@ -1,83 +1,85 @@
-// Suppress ONNX runtime warnings
-console.warn = (function(originalWarn) {
-    return function(msg, ...args) {
-        if (typeof msg === 'string' && !msg.includes('[W:onnxruntime:')) {
-            originalWarn.apply(console, [msg, ...args]);
-        }
-    };
-})(console.warn);
-
 class ASRProcessor {
     constructor() {
-        this.model = null;
-        this.isLoading = false;
-        // Create a single AudioContext to reuse for all audio processing
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
-            sampleRate: 16000
-        });
-        // Load model once upon instantiation
-        this.loadModel();
-    }
-
-    async loadModel() {
-        if (this.isLoading || this.model) return;
-        this.isLoading = true;
-        
-        try {
-            // Dynamically import Transformers
-            const { pipeline } = await import(
-                'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.15.1/dist/transformers.js'
-            );
-            
-            // Initialize the ASR pipeline (tiny English model)
-            this.model = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
-        } catch (error) {
-            console.error('Error loading ASR model:', error);
-        } finally {
-            this.isLoading = false;
+        if (!('webkitSpeechRecognition' in window)) {
+            throw new Error('Web Speech API is not supported in this browser');
         }
+        this.recognition = null;
+        this.isListening = false;
     }
 
     async processAudio(audioBlob, expectedText) {
-        // Wait until model is ready
-        if (!this.model && !this.isLoading) await this.loadModel();
-        if (!this.model) throw new Error('Model not loaded');
+        if (this.isListening) {
+            this.stopListening();
+        }
 
-        try {
-            // Convert blob to array buffer
-            const arrayBuffer = await audioBlob.arrayBuffer();
-            
-            // Decode audio data using the single, shared AudioContext
-            const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-            
-            // Extract float data from the first channel
-            const audioData = audioBuffer.getChannelData(0);
-            console.log('Start transcription');
-            const startTime = performance.now(); // Start timing
-            const transcription = await this.model(audioData);
-            const endTime = performance.now(); // End timing
-            const transcriptionTime = endTime - startTime; // Calculate time taken
-            console.log(`Transcription time: ${(transcriptionTime / 10000).toFixed(2)} seconds`); // Log the time taken
-            const recordedText = transcription.text.trim();
+        return new Promise((resolve, reject) => {
+            // Create a new instance for each recognition
+            this.recognition = new webkitSpeechRecognition();
+            this.recognition.continuous = false;
+            this.recognition.interimResults = false;
+            this.recognition.lang = 'en-US';
 
-            // Compare results
-            const startTime2 = performance.now(); // Start timing
-            const results = this.compareTexts(recordedText, expectedText);
-            const endTime2 = performance.now(); // End timing
-            const comparisonTime = endTime2 - startTime2; // Calculate time taken
-            console.log(`Comparison time: ${(comparisonTime / 10000).toFixed(2)} seconds`); // Log the time taken
-
-
-            return {
-                success: true,
-                results
+            this.recognition.onresult = (event) => {
+                this.isListening = false;
+                const recordedText = event.results[0][0].transcript;
+                const results = this.compareTexts(recordedText, expectedText);
+                resolve({
+                    success: true,
+                    results
+                });
             };
-        } catch (error) {
-            console.error('Error processing audio:', error);
-            return {
-                success: false,
-                error: error.message
+
+            this.recognition.onerror = (event) => {
+                this.isListening = false;
+                reject({
+                    success: false,
+                    error: event.error
+                });
             };
+
+            this.recognition.onend = () => {
+                this.isListening = false;
+                // If no result was received, reject
+                if (!this.recognition.resultReceived) {
+                    reject({
+                        success: false,
+                        error: 'No speech detected'
+                    });
+                }
+            };
+
+            // Add flag to track if we received a result
+            this.recognition.resultReceived = false;
+            this.recognition.onresult = (event) => {
+                this.recognition.resultReceived = true;
+                const recordedText = event.results[0][0].transcript;
+                const results = this.compareTexts(recordedText, expectedText);
+                resolve({
+                    success: true,
+                    results
+                });
+            };
+
+            try {
+                this.recognition.start();
+                this.isListening = true;
+            } catch (error) {
+                reject({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+    }
+
+    stopListening() {
+        if (this.recognition && this.isListening) {
+            try {
+                this.recognition.stop();
+            } catch (error) {
+                console.error('Error stopping recognition:', error);
+            }
+            this.isListening = false;
         }
     }
 
@@ -90,23 +92,47 @@ class ASRProcessor {
         const recordedWords = cleanText(recordedText).split(" ");
         const expectedWords = cleanText(expectedText).split(" ");
 
-        const wordPairs = [];
-        const categories = [];
+        const wordPairs = Array(expectedWords.length).fill(null);
+        const categories = Array(expectedWords.length).fill(2); // Initialize all as no match
         let correctWords = 0;
         const usedRecordedIndices = new Set();
 
-        // Pre-calculate Levenshtein distances
-        const distanceMatrix = expectedWords.map(expected =>
-            recordedWords.map(recorded =>
-                expected === recorded ? 0 : this.levenshteinDistance(expected, recorded)
-            )
-        );
-
+        // First pass: Map exact matches
         for (let i = 0; i < expectedWords.length; i++) {
             const expectedWord = expectedWords[i];
+            // Look for exact match in recorded words
+            const exactMatchIndex = recordedWords.findIndex((word, idx) => 
+                !usedRecordedIndices.has(idx) && word === expectedWord
+            );
+            
+            if (exactMatchIndex !== -1) {
+                wordPairs[i] = [expectedWord, expectedWord];
+                categories[i] = 0; // Exact match
+                correctWords++;
+                usedRecordedIndices.add(exactMatchIndex);
+            }
+        }
+
+        // Second pass: Handle remaining words with Levenshtein distance
+        const remainingExpectedIndices = expectedWords.map((_, i) => i).filter(i => wordPairs[i] === null);
+        
+        // Pre-calculate Levenshtein distances for remaining words
+        const distanceMatrix = remainingExpectedIndices.map(i => {
+            const expected = expectedWords[i];
+            return recordedWords.map((recorded, j) => 
+                usedRecordedIndices.has(j) ? Infinity : 
+                expected === recorded ? 0 : 
+                this.levenshteinDistance(expected, recorded)
+            );
+        });
+
+        // Match remaining words
+        for (let i = 0; i < remainingExpectedIndices.length; i++) {
+            const expectedIndex = remainingExpectedIndices[i];
+            const expectedWord = expectedWords[expectedIndex];
             let bestMatch = '-';
             let bestDistance = Infinity;
-            let bestIndex = -1;
+            let bestRecordedIndex = -1;
 
             // Find best match among unused recorded words
             for (let j = 0; j < recordedWords.length; j++) {
@@ -115,25 +141,18 @@ class ASRProcessor {
                 if (distance < bestDistance) {
                     bestDistance = distance;
                     bestMatch = recordedWords[j];
-                    bestIndex = j;
+                    bestRecordedIndex = j;
                 }
             }
 
-            wordPairs.push([expectedWord, bestMatch]);
-
-            // Category assignment
-            //  0 => exact match
-            //  1 => near match
-            //  2 => no match
-            const category = (bestMatch === expectedWord) ? 0 :
-                             (bestMatch === '-')          ? 2 : 1;
-
-            if (category === 0) correctWords++;
-            if (category === 1) correctWords += 0.5;  // half-point for near matches
-
-            categories.push(category);
-
-            if (bestIndex !== -1) usedRecordedIndices.add(bestIndex);
+            wordPairs[expectedIndex] = [expectedWord, bestMatch];
+            
+            // Update category and score
+            if (bestMatch !== '-') {
+                categories[expectedIndex] = 1; // Near match
+                correctWords += 0.5; // Half point for near matches
+                usedRecordedIndices.add(bestRecordedIndex);
+            }
         }
 
         return {
