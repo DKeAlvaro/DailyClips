@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 import os
 import re
 from datetime import datetime
-import json
+import csv
 
 app = Flask(__name__)
 
@@ -67,9 +67,16 @@ def video_player():
     video_filename = videos[current_index]
     video_path = f'videos/{video_filename}'
     
-    # Load video titles from data.json
-    with open(os.path.join('static', 'videos', 'data.json'), 'r') as f:
-        video_data = json.load(f)
+    # Load video titles from videos_data.csv
+    csv_path = os.path.join('static', 'videos', 'video_titles.csv')
+    try:
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            video_data = list(reader)  # Convert to list of dictionaries
+            print(f"Loaded video data: {video_data}")  # Better debug message
+    except Exception as e:
+        print(f"Error reading CSV file: {e}")
+        video_data = []
     
     # Find the video title for the current video filename
     video_title = None
