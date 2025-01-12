@@ -29,27 +29,21 @@ body {
 
 /* Mobile styles */
 @media (max-width: 768px) {
-    html {
+    html, body {
         position: relative;
         overscroll-behavior-y: auto;
         overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    body {
-        height: 90vh;
-        position: relative;
-        overscroll-behavior-y: auto;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        -webkit-overflow-scrolling: touch; /* Use touch-friendly scrolling */
+        height: 100%; /* Set height explicitly */
     }
 
     .page-container {
-        height: 90vh;
-        overflow: hidden;
+        overflow-y: auto; /* Enable scrolling for the container */
         position: fixed;
         top: 0;
         left: 0;
+        width: 100%; /* Ensure it spans the full width */
+        height: 100%; /* Set scrollable height to 100% */
     }
 }
 
@@ -780,10 +774,6 @@ body {
         padding: 15px;
     }
 
-    /* Add padding to main content to prevent buttons from overlapping content */
-    .main-content {
-        padding-bottom: 150px;
-    }
 }
 
 .chart-container {
@@ -825,7 +815,7 @@ body {
 
     /* Add padding to main content to prevent overlap */
     .main-content {
-        padding-bottom: 370px;  /* Increased to account for fixed chart + controls */
+        padding-bottom: 0px;  /* Increased to account for fixed chart + controls */
     }
 }
 
