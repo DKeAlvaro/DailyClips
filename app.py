@@ -67,6 +67,17 @@ def video_player():
     video_filename = videos[current_index]
     video_path = f'videos/{video_filename}'
     
+    # Load video titles from data.json
+    with open(os.path.join('static', 'videos', 'data.json'), 'r') as f:
+        video_data = json.load(f)
+    
+    # Find the video title for the current video filename
+    video_title = None
+    for entry in video_data:
+        if entry['video_filename'] == video_filename:
+            video_title = entry['video_title']
+            break
+    
     # Get corresponding SRT file (assuming same name, different extension)
     srt_filename = os.path.splitext(video_filename)[0] + '.srt'
     srt_path = os.path.join('static', 'subtitles', srt_filename)
@@ -82,7 +93,8 @@ def video_player():
                          subtitles=subtitles,
                          current_index=current_index,
                          total_videos=len(videos),
-                         saved_scores=video_scores)
+                         saved_scores=video_scores,
+                         video_title=video_title)
 
 @app.route('/favicon.ico')
 def favicon():

@@ -43,14 +43,14 @@ class VideoController {
         console.log('Loaded subtitles:', subtitlesData);
         
         // Optional: Log each subtitle in a more readable format
-        console.log('Subtitle breakdown:');
-        subtitlesData.forEach((subtitle, index) => {
-            console.log(`Subtitle ${index + 1}:`);
-            console.log(`  Start: ${subtitle.start}ms (${this.formatTime(subtitle.start)})`);
-            console.log(`  End: ${subtitle.end}ms (${this.formatTime(subtitle.end)})`);
-            console.log(`  Text: "${subtitle.text}"`);
-            console.log('---');
-        });
+        // console.log('Subtitle breakdown:');
+        // subtitlesData.forEach((subtitle, index) => {
+        //     console.log(`Subtitle ${index + 1}:`);
+        //     console.log(`  Start: ${subtitle.start}ms (${this.formatTime(subtitle.start)})`);
+        //     console.log(`  End: ${subtitle.end}ms (${this.formatTime(subtitle.end)})`);
+        //     console.log(`  Text: "${subtitle.text}"`);
+        //     console.log('---');
+        // });
     }
 
     initializeControls() {
@@ -252,7 +252,7 @@ window.addEventListener('load', () => {
         const currentTime = this.video.currentTime * 1000; // Convert to milliseconds
     
         // Log current video position
-        console.log(`Current video position: ${this.formatTime(currentTime)}`);
+        // console.log(`Current video position: ${this.formatTime(currentTime)}`);
     
         for (let i = 0; i < subtitlesData.length; i++) {
             const subtitle = subtitlesData[i];

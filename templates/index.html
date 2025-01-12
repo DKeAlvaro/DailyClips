@@ -62,7 +62,7 @@
                 </div>
             </div>
             <div class="clip-legend">
-                Inception (2010) - Fight Club (1999)
+                {% if video_title %}{{ video_title }}{% endif %}
             </div>
             <div class="svg-container">
                 <img src="{{ url_for('static', filename='images/listen-then-repeat.svg') }}" alt="Listen then Repeat" class="floating-svg">
