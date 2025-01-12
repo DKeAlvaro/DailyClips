@@ -93,59 +93,60 @@
         gradient.addColorStop(0.5, 'rgba(74, 158, 255, 0.7)');  // Medium in middle
         gradient.addColorStop(1, 'rgba(74, 158, 255, 0.5)');    // Darker at bottom
 
-        // Initialize data array with zeros
-        const data = Array(7).fill(0);
+        // Calculate initial score distribution
+        const initialDistribution = Array(7).fill(0);
+        let initialTotalScore = 0;
         
-        // Load saved scores into the chart
         if (savedScores && savedScores.length > 0) {
             savedScores.forEach(score => {
                 const binIndex = Math.min(Math.floor(score / 15), 6);
-                data[binIndex]++;
+                initialDistribution[binIndex]++;
+                initialTotalScore += score;
             });
-            // Show chart container if we have scores
-            const chartContainer = document.querySelector('.chart-container');
-            if (chartContainer) {
-                chartContainer.classList.remove('hidden');
-            }
         }
 
-        const accuracyData = {
+        const initialAverageScore = savedScores.length > 0 ? 
+            (initialTotalScore / savedScores.length).toFixed(1) + '%' : 
+            'No scores yet';
+
+        const accuracyChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
             labels: ['0-15%', '16-30%', '31-45%', '46-60%', '61-75%', '76-90%', '91-100%'],
             datasets: [{
-                data: data,
+                    label: 'Global Scores',
+                    data: initialDistribution,
                 backgroundColor: Array(7).fill(gradient),
                 borderColor: Array(7).fill('rgba(74, 158, 255, 0.9)'),
                 borderWidth: 2,
                 borderRadius: 5,
                 barPercentage: 0.8
             }]
-        };
-
-        const accuracyChart = new Chart(ctx, {
-            type: 'bar',
-            data: accuracyData,
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false,
-                        labels: {
-                            color: '#fff',
-                            font: {
-                                family: 'Inter',
-                                size: 14
-                            }
-                        }
+                        display: false
                     },
                     title: {
                         display: true,
-                        text: savedScores && savedScores.length > 0 ? 'Global Scores' : 'No scores yet',
+                        text: `Global Average Score: ${initialAverageScore}`,
                         color: '#fff',
                         font: {
                             family: 'Inter',
                             size: 16,
                             weight: 'bold'
+                        }
+                    },
+                    subtitle: {
+                        display: false,
+                        text: `Global Average: ${initialAverageScore}`,
+                        color: '#fff',
+                        font: {
+                            family: 'Inter',
+                            size: 14
                         }
                     }
                 },
@@ -157,14 +158,14 @@
                             font: {
                                 family: 'Inter'
                             },
-                            stepSize: 1  // This ensures whole numbers only
+                            stepSize: 1
                         },
                         grid: {
                             color: 'rgba(255, 255, 255, 0.1)',
                             tickLength: 5,
                             drawTicks: true,
                             drawOnChartArea: true,
-                            count: 5  // This sets the number of horizontal lines
+                            count: 5
                         }
                     },
                     x: {
@@ -182,11 +183,53 @@
             }
         });
 
-        // Function to update chart data
-        function updateAccuracyChart(accuracy) {
-            const binIndex = Math.min(Math.floor(accuracy / 15), 6);
+        // Function to update chart with global scores
+        function updateGlobalScores() {
+            const videoIndex = window.location.search.split('=')[1] || '0';
+            fetch(`/get_global_scores/${videoIndex}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reset data array
+                        const scoreDistribution = Array(7).fill(0);
+                        let totalScore = 0;
+                        
+                        // Calculate distribution and average
+                        if (data.scores.length > 0) {
+                            data.scores.forEach(score => {
+                                const binIndex = Math.min(Math.floor(score / 15), 6);
+                                scoreDistribution[binIndex]++;
+                                totalScore += score;
+                            });
+                            
+                            const averageScore = totalScore / data.scores.length;
+                            accuracyChart.options.plugins.subtitle.text = `Global Average: ${averageScore.toFixed(1)}%`;
+                        } else {
+                            accuracyChart.options.plugins.subtitle.text = 'No scores yet';
+                        }
+                        
+                        // Update chart data
+                        accuracyChart.data.datasets[0].data = scoreDistribution;
+                        accuracyChart.update();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching global scores:', error);
+                    accuracyChart.options.plugins.subtitle.text = 'Error loading scores';
+                    accuracyChart.update();
+                });
+        }
+
+        // Update global scores every 30 seconds
+        setInterval(updateGlobalScores, 30000);
+
+        // Function to update chart with new score
+        function updateAccuracyChart(newScore) {
+            const binIndex = Math.min(Math.floor(newScore / 15), 6);
             accuracyChart.data.datasets[0].data[binIndex]++;
             accuracyChart.update();
+            // Update global scores to show latest data
+            updateGlobalScores();
         }
     </script>
     <script src="{{ url_for('static', filename='js/asr-client.js') }}"></script>

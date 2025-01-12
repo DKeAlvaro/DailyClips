@@ -3,8 +3,21 @@ import os
 import re
 from datetime import datetime
 import csv
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///scores.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+class Score(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    video_index = db.Column(db.String(50), nullable=False)
+    score = db.Column(db.Float, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+with app.app_context():
+    db.create_all()
 
 # Store scores in memory (you might want to use a database in production)
 scores = {}
@@ -92,15 +105,16 @@ def video_player():
     # Parse subtitles
     subtitles = parse_srt(srt_path)
     
-    # Get saved scores for current video
-    video_scores = scores.get(str(current_index), [])
+    # Get saved scores for current video from database
+    video_scores = Score.query.filter_by(video_index=str(current_index)).with_entities(Score.score).all()
+    scores_list = [s[0] for s in video_scores]
     
     return render_template('index.html', 
                          video_path=video_path,
                          subtitles=subtitles,
                          current_index=current_index,
                          total_videos=len(videos),
-                         saved_scores=video_scores,
+                         saved_scores=scores_list,
                          video_title=video_title)
 
 @app.route('/favicon.ico')
@@ -114,16 +128,31 @@ def save_score():
     video_index = data.get('video_index', '0')
     score = data.get('score')
     
-    if video_index not in scores:
-        scores[video_index] = []
+    # Save to database
+    new_score = Score(video_index=video_index, score=score)
+    db.session.add(new_score)
+    db.session.commit()
     
-    scores[video_index].append(score)
+    # Get all scores for this video
+    video_scores = Score.query.filter_by(video_index=video_index).with_entities(Score.score).all()
+    scores_list = [s[0] for s in video_scores]
     
     return jsonify({
         'success': True,
         'message': 'Score saved successfully',
-        'scores': scores[video_index]
+        'scores': scores_list
+    })
+
+@app.route('/get_global_scores/<video_index>')
+def get_global_scores(video_index):
+    # Get all scores for this video
+    video_scores = Score.query.filter_by(video_index=video_index).with_entities(Score.score).all()
+    scores_list = [s[0] for s in video_scores]
+    
+    return jsonify({
+        'success': True,
+        'scores': scores_list
     })
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=False) 

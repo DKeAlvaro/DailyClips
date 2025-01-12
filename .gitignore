@@ -22,4 +22,7 @@ var/
 venv/
 .venv/
 .idea/
-.vscode/ 
+.vscode/
+*.db
+*.sqlite
+*.sqlite3 
