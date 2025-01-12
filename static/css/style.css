@@ -4,6 +4,55 @@
     --accent-color: #4a9eff;
 }
 
+html {
+    height: 100%;
+    width: 100%;
+    position: relative;
+    overflow-y: auto;
+}
+
+body {
+    background-color: transparent;
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    width: 100%;
+    position: relative;
+    overflow-y: auto;
+}
+
+.page-container {
+    width: 100%;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+    html {
+        position: relative;
+        overscroll-behavior-y: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    body {
+        height: 90vh;
+        position: relative;
+        overscroll-behavior-y: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .page-container {
+        height: 90vh;
+        overflow: hidden;
+        position: fixed;
+        top: 0;
+        left: 0;
+    }
+}
+
 /* Animated Background */
 .wave-container {
     position: fixed;
@@ -95,16 +144,6 @@
         opacity: 0.5;
         transform: scale(1);
     }
-}
-
-body {
-    background-color: transparent;
-    color: var(--text-color);
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-    position: relative;
 }
 
 .container {
@@ -787,5 +826,22 @@ body {
     /* Add padding to main content to prevent overlap */
     .main-content {
         padding-bottom: 370px;  /* Increased to account for fixed chart + controls */
+    }
+}
+
+/* iPhone SE and similar very small devices */
+@media only screen and (max-width: 375px) and (max-height: 667px) {
+    .chart-container {
+        top: unset;
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 85%;
+        max-width: 650px;
+        height: 130px;
+        margin: 0;
+        padding: 15px;
+        z-index: 100;
     }
 }
