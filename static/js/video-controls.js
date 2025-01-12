@@ -14,6 +14,7 @@ class VideoController {
         this.isTransitioning = false;
         this.asrProcessor = new ASRProcessor();
         this.accuracies = [];  // Store accuracies for current session
+        this.microphoneStream = null;  // Store microphone stream for cleanup
 
         // Create loading spinner
         this.loadingSpinner = document.createElement('div');
@@ -216,9 +217,19 @@ window.addEventListener('load', () => {
                 }
             });
             
+            // Store the stream for cleanup
+            this.microphoneStream = stream;
+            
             this.mediaRecorder = new MediaRecorder(stream, {
                 mimeType: 'audio/webm;codecs=opus',
                 audioBitsPerSecond: 128000
+            });
+            
+            // Add cleanup when user leaves
+            window.addEventListener('beforeunload', () => {
+                if (this.microphoneStream) {
+                    this.microphoneStream.getTracks().forEach(track => track.stop());
+                }
             });
             
             this.mediaRecorder.ondataavailable = (event) => {
