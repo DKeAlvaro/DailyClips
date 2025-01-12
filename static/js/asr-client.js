@@ -22,10 +22,10 @@ class ASRProcessor {
             this.recognition.onresult = (event) => {
                 this.isListening = false;
                 const recordedText = event.results[0][0].transcript;
-                const results = this.compareTexts(recordedText, expectedText);
+            const results = this.compareTexts(recordedText, expectedText);
                 resolve({
-                    success: true,
-                    results
+                success: true,
+                results
                 });
             };
 
@@ -42,7 +42,7 @@ class ASRProcessor {
                 // If no result was received, reject
                 if (!this.recognition.resultReceived) {
                     reject({
-                        success: false,
+                success: false,
                         error: 'No speech detected'
                     });
                 }

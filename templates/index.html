@@ -102,6 +102,11 @@
                 const binIndex = Math.min(Math.floor(score / 15), 6);
                 data[binIndex]++;
             });
+            // Show chart container if we have scores
+            const chartContainer = document.querySelector('.chart-container');
+            if (chartContainer) {
+                chartContainer.classList.remove('hidden');
+            }
         }
 
         const accuracyData = {
@@ -135,7 +140,7 @@
                     },
                     title: {
                         display: true,
-                        text: 'Global Scores',
+                        text: savedScores && savedScores.length > 0 ? 'Global Scores' : 'No scores yet',
                         color: '#fff',
                         font: {
                             family: 'Inter',
