@@ -79,6 +79,7 @@
     <script>
         const subtitlesData = {{ subtitles|tojson|safe }};
     </script>
+    <script src="{{ url_for('static', filename='js/asr-client.js') }}"></script>
     <script src="{{ url_for('static', filename='js/video-controls.js') }}"></script>
 </body>
 </html>

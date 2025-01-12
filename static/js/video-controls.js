@@ -12,6 +12,7 @@ class VideoController {
         this.isRecording = false;
         this.hasStarted = false;
         this.isTransitioning = false;
+        this.asrProcessor = new ASRProcessor();
 
         // Create loading spinner
         this.loadingSpinner = document.createElement('div');
@@ -299,48 +300,31 @@ window.addEventListener('load', () => {
             // Create WAV file
             const wavBlob = await this.audioBufferToWav(audioBuffer);
             
-            // Send to server
-            const reader = new FileReader();
-            reader.onload = async () => {
-                try {
-                    console.log('Sending audio data to server...');
-                    const response = await fetch('/process-audio', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            audio: reader.result,
-                            subtitle: subtitlesData[this.currentSubtitleIndex].text
-                        })
-                    });
-                    
-                    if (response.ok) {
-                        const results = await response.json();
-                        console.log('Server response:', results);
-                        if (results.success) {
-                            this.showResults(results.results);
-                        } else {
-                            console.error('Error in results:', results.error);
-                            this.showRecordButton(); // Allow retry
-                        }
-                    } else {
-                        console.error('Server error:', response.statusText);
-                        this.showRecordButton(); // Allow retry
-                    }
-                    
-                } catch (error) {
-                    console.error('Error processing audio:', error);
+            try {
+                console.log('Processing audio with client-side ASR...');
+                const results = await this.asrProcessor.processAudio(
+                    wavBlob,
+                    subtitlesData[this.currentSubtitleIndex].text
+                );
+                
+                if (results.success) {
+                    console.log('ASR Results:', results);
+                    this.showResults(results.results);
+                } else {
+                    console.error('Error in results:', results.error);
                     this.showRecordButton(); // Allow retry
                 }
-            };
+                
+            } catch (error) {
+                console.error('Error processing audio:', error);
+                this.showRecordButton(); // Allow retry
+            }
             
-            reader.readAsDataURL(wavBlob);
-    } catch (error) {
+        } catch (error) {
             console.error('Error converting audio:', error);
             this.showRecordButton(); // Allow retry
+        }
     }
-}
 
     async audioBufferToWav(buffer) {
     const numChannels = 1;
@@ -463,7 +447,6 @@ window.addEventListener('load', () => {
         results.real_and_transcribed_words.forEach((pair, index) => {
             const [expected, pronounced] = pair;
             const category = results.pronunciation_categories[index];
-            const [expectedIPA, pronouncedIPA] = results.real_and_transcribed_words_ipa[index];
             
             let colorClass;
             switch(category) {
@@ -476,9 +459,9 @@ window.addEventListener('load', () => {
             if (category !== 0) {
                 hoverContent = `
                     <div class="hover-text">
-                        <span class="user-word">${pronounced === '-' ? 'None' : pronouncedIPA || 'None'}</span>
+                        <span class="user-word">${pronounced === '-' ? 'None' : pronounced}</span>
                         <span class="arrow">→</span>
-                        <span class="right-word">${expectedIPA}</span>
+                        <span class="right-word">${expected}</span>
                     </div>
                 `;
             }
