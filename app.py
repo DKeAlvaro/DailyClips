@@ -2,8 +2,12 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 import os
 import re
 from datetime import datetime
+import json
 
 app = Flask(__name__)
+
+# Store scores in memory (you might want to use a database in production)
+scores = {}
 
 def parse_srt(srt_path):
     """Parse SRT file and return a list of subtitle dictionaries."""
@@ -70,16 +74,37 @@ def video_player():
     # Parse subtitles
     subtitles = parse_srt(srt_path)
     
+    # Get saved scores for current video
+    video_scores = scores.get(str(current_index), [])
+    
     return render_template('index.html', 
                          video_path=video_path,
                          subtitles=subtitles,
                          current_index=current_index,
-                         total_videos=len(videos))
+                         total_videos=len(videos),
+                         saved_scores=video_scores)
 
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                              'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
+@app.route('/save_score', methods=['POST'])
+def save_score():
+    data = request.json
+    video_index = data.get('video_index', '0')
+    score = data.get('score')
+    
+    if video_index not in scores:
+        scores[video_index] = []
+    
+    scores[video_index].append(score)
+    
+    return jsonify({
+        'success': True,
+        'message': 'Score saved successfully',
+        'scores': scores[video_index]
+    })
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False) 
+    app.run(debug=True) 

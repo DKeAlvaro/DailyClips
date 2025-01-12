@@ -13,6 +13,7 @@ class VideoController {
         this.hasStarted = false;
         this.isTransitioning = false;
         this.asrProcessor = new ASRProcessor();
+        this.accuracies = [];  // Store accuracies for current session
 
         // Create loading spinner
         this.loadingSpinner = document.createElement('div');
@@ -72,6 +73,61 @@ class VideoController {
             this.mobilePlayPauseBtn.style.display = 'block';
             this.playPauseBtn.textContent = 'Play Again';
             this.mobilePlayPauseBtn.textContent = 'Play Again';
+            
+            // Hide the last results section
+            const resultsSection = document.querySelector('.results-section');
+            if (resultsSection) {
+                resultsSection.remove();
+            }
+            
+            // Calculate and show average accuracy when video ends
+            if (this.accuracies.length > 0) {
+                const averageAccuracy = this.accuracies.reduce((a, b) => a + b, 0) / this.accuracies.length;
+                
+                // Send the average accuracy to the server
+                fetch('/save_score', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        score: averageAccuracy,
+                        video_index: window.location.search.split('=')[1] || '0'  // Get video index from URL
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Score saved:', data);
+                    // Update chart with the saved score and show current score in title
+                    accuracyChart.options.plugins.title.text = `Your Score: ${averageAccuracy.toFixed(1)}%`;
+                    updateAccuracyChart(averageAccuracy);
+                    const chartContainer = document.querySelector('.chart-container');
+                    if (chartContainer) {
+                        chartContainer.classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving score:', error);
+                    // Still update chart even if save fails
+                    accuracyChart.options.plugins.title.text = `Your Score: ${averageAccuracy.toFixed(1)}%`;
+                    updateAccuracyChart(averageAccuracy);
+                    const chartContainer = document.querySelector('.chart-container');
+                    if (chartContainer) {
+                        chartContainer.classList.remove('hidden');
+                    }
+                });
+            }
+
+            // Show SVG and legend
+            const svgElement = document.querySelector('.floating-svg');
+            const legendElement = document.querySelector('.clip-legend');
+            if (svgElement) {
+                svgElement.style.opacity = '1';
+            }
+            if (legendElement) {
+                legendElement.style.opacity = '1';
+            }
+            
             this.updateNavigationVisibility();
         });
 
@@ -113,6 +169,7 @@ window.addEventListener('load', () => {
             this.hasStarted = false;
             this.isRecording = false;
             this.audioChunks = [];
+            this.accuracies = [];  // Reset accuracies array
             
             // Remove results section if it exists
             const resultsSection = document.querySelector('.results-section');
@@ -122,27 +179,21 @@ window.addEventListener('load', () => {
             
             // Reset video time to beginning
             this.video.currentTime = 0;
-            
-            // Show SVG and legend again
-            const svgElement = document.querySelector('.floating-svg');
-            const legendElement = document.querySelector('.clip-legend');
-            if (svgElement) {
-                svgElement.style.opacity = '1';
-            }
-            if (legendElement) {
-                legendElement.style.opacity = '1';
-            }
         }
         
         this.video.play();
-        // Fade out the SVG and legend
+        // Fade out the SVG, legend and chart
         const svgElement = document.querySelector('.floating-svg');
         const legendElement = document.querySelector('.clip-legend');
+        const chartContainer = document.querySelector('.chart-container');
         if (svgElement) {
             svgElement.style.opacity = '0';
         }
         if (legendElement) {
             legendElement.style.opacity = '0';
+        }
+        if (chartContainer) {
+            chartContainer.classList.add('hidden');
         }
     }
 
@@ -428,6 +479,9 @@ window.addEventListener('load', () => {
         } else {
             this.goodSound.play();
         }
+
+        // Store the accuracy for later averaging
+        this.accuracies.push(score);
 
         // Create results section if it doesn't exist
         let resultsSection = document.querySelector('.results-section');

@@ -663,7 +663,7 @@ body {
 }
 
 .svg-container {
-    top: -25px;
+    top: -50px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -696,6 +696,7 @@ body {
     }
 } 
 .clip-legend {
+    top: -20px;
     position: relative;
     width: 90%;
     max-width: 700px;
@@ -743,5 +744,48 @@ body {
     /* Add padding to main content to prevent buttons from overlapping content */
     .main-content {
         padding-bottom: 150px;
+    }
+}
+
+.chart-container {
+    top: -70px;
+    max-width: 680px;
+    margin: 10px auto;
+    padding: 15px;
+    position: relative;
+    height: 150px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(74, 158, 255, 0.2);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.chart-container.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+@media (max-width: 768px) {
+    .chart-container {
+        top: unset;
+        position: fixed;
+        bottom: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 85%;
+        max-width: 650px;
+        height: 230px;
+        margin: 0;
+        padding: 15px;
+        z-index: 100;
+    }
+
+    /* Add padding to main content to prevent overlap */
+    .main-content {
+        padding-bottom: 370px;  /* Increased to account for fixed chart + controls */
     }
 }

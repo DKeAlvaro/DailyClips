@@ -67,6 +67,9 @@
             <div class="svg-container">
                 <img src="{{ url_for('static', filename='images/listen-then-repeat.svg') }}" alt="Listen then Repeat" class="floating-svg">
             </div>
+            <div class="chart-container">
+                <canvas id="accuracyChart"></canvas>
+            </div>
             <div class="controls mobile-controls">
                 <button class="play-pause-btn">Play</button>
                 <button class="record-btn" style="display: none;">Record</button>
@@ -76,8 +79,110 @@
             {% endif %}
         </main>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const subtitlesData = {{ subtitles|tojson|safe }};
+        const savedScores = {{ saved_scores|tojson|safe }};
+        
+        // Initialize the accuracy chart
+        const ctx = document.getElementById('accuracyChart').getContext('2d');
+
+        // Create gradient for bars
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(74, 158, 255, 0.9)');    // Brighter at top
+        gradient.addColorStop(0.5, 'rgba(74, 158, 255, 0.7)');  // Medium in middle
+        gradient.addColorStop(1, 'rgba(74, 158, 255, 0.5)');    // Darker at bottom
+
+        // Initialize data array with zeros
+        const data = Array(7).fill(0);
+        
+        // Load saved scores into the chart
+        if (savedScores && savedScores.length > 0) {
+            savedScores.forEach(score => {
+                const binIndex = Math.min(Math.floor(score / 15), 6);
+                data[binIndex]++;
+            });
+        }
+
+        const accuracyData = {
+            labels: ['0-15%', '16-30%', '31-45%', '46-60%', '61-75%', '76-90%', '91-100%'],
+            datasets: [{
+                data: data,
+                backgroundColor: Array(7).fill(gradient),
+                borderColor: Array(7).fill('rgba(74, 158, 255, 0.9)'),
+                borderWidth: 2,
+                borderRadius: 5,
+                barPercentage: 0.8
+            }]
+        };
+
+        const accuracyChart = new Chart(ctx, {
+            type: 'bar',
+            data: accuracyData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                        labels: {
+                            color: '#fff',
+                            font: {
+                                family: 'Inter',
+                                size: 14
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Global Scores',
+                        color: '#fff',
+                        font: {
+                            family: 'Inter',
+                            size: 16,
+                            weight: 'bold'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#fff',
+                            font: {
+                                family: 'Inter'
+                            },
+                            stepSize: 1  // This ensures whole numbers only
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)',
+                            tickLength: 5,
+                            drawTicks: true,
+                            drawOnChartArea: true,
+                            count: 5  // This sets the number of horizontal lines
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#fff',
+                            font: {
+                                family: 'Inter'
+                            }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Function to update chart data
+        function updateAccuracyChart(accuracy) {
+            const binIndex = Math.min(Math.floor(accuracy / 15), 6);
+            accuracyChart.data.datasets[0].data[binIndex]++;
+            accuracyChart.update();
+        }
     </script>
     <script src="{{ url_for('static', filename='js/asr-client.js') }}"></script>
     <script src="{{ url_for('static', filename='js/video-controls.js') }}"></script>
