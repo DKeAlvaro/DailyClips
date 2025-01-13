@@ -117,11 +117,6 @@ def video_player():
                          saved_scores=scores_list,
                          video_title=video_title)
 
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
-                             'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
 @app.route('/save_score', methods=['POST'])
 def save_score():
     data = request.json
