@@ -210,8 +210,10 @@ window.addEventListener('load', () => {
 
     async startRecording() {
         try {
+            console.log('[Recording Debug] Requesting microphone permission...');
             // First check for microphone permission
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            console.log('[Recording Debug] Microphone permission granted');
             stream.getTracks().forEach(track => track.stop()); // Stop the stream after permission check
             
             this.isRecording = true;
@@ -220,22 +222,24 @@ window.addEventListener('load', () => {
             this.recordBtn.classList.add('recording');
             this.mobileRecordBtn.classList.add('recording');
 
+            console.log('[Recording Debug] Starting ASR processing...');
             // Process the current subtitle text with Web Speech API
             try {
+                console.log('[Recording Debug] Current subtitle:', subtitlesData[this.currentSubtitleIndex].text);
                 const results = await this.asrProcessor.processAudio(
                     null, // We don't need the blob anymore
                     subtitlesData[this.currentSubtitleIndex].text
                 );
                 
                 if (results.success) {
-                    console.log('ASR Results:', results);
+                    console.log('[Recording Debug] ASR processing successful');
                     this.showResults(results.results);
                 } else {
-                    console.error('Error in results:', results.error);
+                    console.error('[Recording Debug] Error in results:', results.error);
                     this.showRecordButton(); // Allow retry
                 }
             } catch (error) {
-                console.error('Speech recognition error:', error);
+                console.error('[Recording Debug] Speech recognition error:', error);
                 this.showRecordButton(); // Allow retry
                 // Show error message to user
                 this.recordBtn.textContent = 'Try Again';
@@ -243,7 +247,7 @@ window.addEventListener('load', () => {
             }
             
         } catch (error) {
-            console.error('Error accessing microphone:', error);
+            console.error('[Recording Debug] Error accessing microphone:', error);
             // Hide loading spinner if it's showing
             this.loadingSpinner.style.display = 'none';
             this.mobileLoadingSpinner.style.display = 'none';
@@ -265,11 +269,14 @@ window.addEventListener('load', () => {
     }
 
     stopRecording() {
+        console.log('[Recording Debug] Stopping recording...');
         if (this.isRecording) {
             this.isRecording = false;
             if (this.asrProcessor.recognition && this.asrProcessor.recognition.accumulatedText) {
+                console.log('[Recording Debug] Recognition has accumulated text, showing spinner');
                 this.showLoadingSpinner();
             } else {
+                console.log('[Recording Debug] No accumulated text, showing record button');
                 this.showRecordButton();
             }
             this.asrProcessor.stopListening();
@@ -277,6 +284,7 @@ window.addEventListener('load', () => {
     }
 
     toggleRecording() {
+        console.log('[Recording Debug] Toggle recording, current state:', this.isRecording);
         if (!this.isRecording) {
             this.startRecording();
         } else {

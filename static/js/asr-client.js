@@ -8,7 +8,11 @@ class ASRProcessor {
     }
 
     async processAudio(audioBlob, expectedText) {
+        console.log('[ASR Debug] Starting audio processing...', new Date().toISOString());
+        console.log('[ASR Debug] Expected text:', expectedText);
+
         if (this.isListening) {
+            console.log('[ASR Debug] Already listening, stopping previous session');
             this.stopListening();
         }
 
@@ -20,17 +24,32 @@ class ASRProcessor {
             this.recognition.lang = 'en-US';
 
             let accumulatedText = '';
+            let recognitionStartTime = null;
+
+            this.recognition.onstart = () => {
+                console.log('[ASR Debug] Recognition started at:', new Date().toISOString());
+                recognitionStartTime = Date.now();
+            };
 
             this.recognition.onresult = (event) => {
+                const processingTime = Date.now() - recognitionStartTime;
+                console.log(`[ASR Debug] Result received after ${processingTime}ms`);
+                
                 // Get the latest result
                 const latestResult = event.results[event.results.length - 1][0].transcript;
+                console.log('[ASR Debug] Latest result:', latestResult);
+                console.log('[ASR Debug] Confidence:', event.results[event.results.length - 1][0].confidence);
+                
                 accumulatedText = accumulatedText + ' ' + latestResult;
+                console.log('[ASR Debug] Accumulated text:', accumulatedText.trim());
                 
                 // Store the accumulated text for when we stop
                 this.recognition.accumulatedText = accumulatedText.trim();
             };
 
             this.recognition.onerror = (event) => {
+                console.error('[ASR Debug] Recognition error:', event.error);
+                console.error('[ASR Debug] Error details:', event);
                 this.isListening = false;
                 reject({
                     success: false,
@@ -39,27 +58,35 @@ class ASRProcessor {
             };
 
             this.recognition.onend = () => {
+                const totalTime = recognitionStartTime ? Date.now() - recognitionStartTime : 'N/A';
+                console.log(`[ASR Debug] Recognition ended. Total time: ${totalTime}ms`);
+                
                 // Only process results if we explicitly stopped listening
                 if (!this.isListening && this.recognition.accumulatedText) {
+                    console.log('[ASR Debug] Processing final results...');
                     const results = this.compareTexts(this.recognition.accumulatedText, expectedText);
+                    console.log('[ASR Debug] Final results:', results);
                     resolve({
                         success: true,
                         results
                     });
                 } else if (this.isListening) {
+                    console.log('[ASR Debug] Still listening, restarting recognition');
                     // If we're still supposed to be listening, restart
                     try {
                         this.recognition.start();
                     } catch (error) {
-                        console.error('Error restarting recognition:', error);
+                        console.error('[ASR Debug] Error restarting recognition:', error);
                     }
                 }
             };
 
             try {
+                console.log('[ASR Debug] Attempting to start recognition...');
                 this.recognition.start();
                 this.isListening = true;
             } catch (error) {
+                console.error('[ASR Debug] Failed to start recognition:', error);
                 reject({
                     success: false,
                     error: error.message
