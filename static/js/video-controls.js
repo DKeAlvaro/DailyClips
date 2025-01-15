@@ -210,6 +210,10 @@ window.addEventListener('load', () => {
 
     async startRecording() {
         try {
+            // First check for microphone permission
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(track => track.stop()); // Stop the stream after permission check
+            
             this.isRecording = true;
             this.recordBtn.textContent = 'Stop Recording';
             this.mobileRecordBtn.textContent = 'Stop Recording';
@@ -240,10 +244,23 @@ window.addEventListener('load', () => {
             
         } catch (error) {
             console.error('Error accessing microphone:', error);
-            this.recordBtn.textContent = 'Microphone Error';
-            this.mobileRecordBtn.textContent = 'Microphone Error';
-            this.recordBtn.disabled = true;
-            this.mobileRecordBtn.disabled = true;
+            // Hide loading spinner if it's showing
+            this.loadingSpinner.style.display = 'none';
+            this.mobileLoadingSpinner.style.display = 'none';
+            
+            // Show error message on buttons
+            this.recordBtn.style.display = 'block';
+            this.mobileRecordBtn.style.display = 'block';
+            this.recordBtn.textContent = 'Allow Microphone';
+            this.mobileRecordBtn.textContent = 'Allow Microphone';
+            this.recordBtn.classList.add('error');
+            this.mobileRecordBtn.classList.add('error');
+            this.recordBtn.disabled = false;
+            this.mobileRecordBtn.disabled = false;
+            
+            // Add error styling
+            this.recordBtn.style.background = 'linear-gradient(45deg, rgba(255, 59, 48, 0.4), rgba(255, 79, 68, 0.4))';
+            this.mobileRecordBtn.style.background = 'linear-gradient(45deg, rgba(255, 59, 48, 0.4), rgba(255, 79, 68, 0.4))';
         }
     }
 

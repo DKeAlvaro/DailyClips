@@ -905,3 +905,15 @@ body {
 .record-btn:hover::before, .play-again-btn:hover::before {
     transform: translateY(0);
 }
+
+.record-btn.error {
+    background: linear-gradient(45deg, rgba(255, 59, 48, 0.4), rgba(255, 79, 68, 0.4)) !important;
+    animation: none;
+    box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
+}
+
+.record-btn.error:hover {
+    background: linear-gradient(45deg, rgba(255, 59, 48, 0.5), rgba(255, 79, 68, 0.5)) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 59, 48, 0.4);
+}
