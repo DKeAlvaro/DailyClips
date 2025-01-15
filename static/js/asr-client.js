@@ -22,7 +22,7 @@ class ASRProcessor {
 
         return new Promise((resolve, reject) => {
             this.accumulatedText = '';
-            this.recognition = new webkitSpeechRecognition();
+            this.recognition = new SpeechRecognition();
             
             // Different settings for mobile vs desktop
             if (this.isMobile) {
