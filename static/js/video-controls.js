@@ -12,6 +12,9 @@ class VideoController {
         this.isTransitioning = false;
         this.asrProcessor = new ASRProcessor();
         this.accuracies = [];  // Store accuracies for current session
+        this.mediaRecorder = null;
+        this.audioChunks = [];
+        this.recordingStream = null;
 
         // Create loading spinner for desktop
         this.loadingSpinner = document.createElement('div');
@@ -211,19 +214,29 @@ window.addEventListener('load', () => {
     async startRecording() {
         try {
             console.log('[Recording Debug] Requesting microphone permission...');
-            // First check for microphone permission
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // Get microphone stream
+            this.recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             console.log('[Recording Debug] Microphone permission granted');
+            
+            // Setup MediaRecorder
+            this.mediaRecorder = new MediaRecorder(this.recordingStream);
+            this.audioChunks = [];
+
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    this.audioChunks.push(event.data);
+                }
+            };
+
+            // Start recording immediately
+            this.mediaRecorder.start();
+            console.log('[Recording Debug] Started MediaRecorder');
             
             this.isRecording = true;
             this.recordBtn.textContent = 'Stop Recording';
             this.mobileRecordBtn.textContent = 'Stop Recording';
             this.recordBtn.classList.add('recording');
             this.mobileRecordBtn.classList.add('recording');
-
-            // Start recording immediately
-            console.log('[Recording Debug] Starting immediate recording...');
-            this.asrProcessor.startRecording();
             
         } catch (error) {
             console.error('[Recording Debug] Error accessing microphone:', error);
@@ -247,31 +260,50 @@ window.addEventListener('load', () => {
         }
     }
 
-    async stopRecording() {
+    stopRecording() {
         console.log('[Recording Debug] Stopping recording...');
-        if (this.isRecording) {
-            this.isRecording = false;
+        if (this.isRecording && this.mediaRecorder) {
             this.showLoadingSpinner();
-
-            try {
-                console.log('[Recording Debug] Processing recorded audio...');
-                const results = await this.asrProcessor.stopAndProcess(
-                    subtitlesData[this.currentSubtitleIndex].text
-                );
-                
-                if (results.success) {
-                    console.log('[Recording Debug] Processing successful');
-                    this.showResults(results.results);
-                } else {
-                    console.error('[Recording Debug] Error in results:', results.error);
-                    this.showRecordButton(); // Allow retry
+            
+            this.mediaRecorder.onstop = async () => {
+                // Clean up stream tracks
+                if (this.recordingStream) {
+                    this.recordingStream.getTracks().forEach(track => track.stop());
+                    this.recordingStream = null;
                 }
-            } catch (error) {
-                console.error('[Recording Debug] Processing error:', error);
-                this.showRecordButton();
-                this.recordBtn.textContent = 'Try Again';
-                this.mobileRecordBtn.textContent = 'Try Again';
-            }
+
+                // Create audio blob from chunks
+                const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                console.log('[Recording Debug] Audio recorded, size:', audioBlob.size);
+
+                try {
+                    console.log('[Recording Debug] Starting ASR processing...');
+                    console.log('[Recording Debug] Current subtitle:', subtitlesData[this.currentSubtitleIndex].text);
+                    
+                    const results = await this.asrProcessor.processAudio(
+                        audioBlob,
+                        subtitlesData[this.currentSubtitleIndex].text
+                    );
+                    
+                    if (results.success) {
+                        console.log('[Recording Debug] ASR processing successful');
+                        this.showResults(results.results);
+                    } else {
+                        console.error('[Recording Debug] Error in results:', results.error);
+                        this.showRecordButton();
+                    }
+                } catch (error) {
+                    console.error('[Recording Debug] Speech recognition error:', error);
+                    this.showRecordButton();
+                    this.recordBtn.textContent = 'Try Again';
+                    this.mobileRecordBtn.textContent = 'Try Again';
+                }
+            };
+
+            // Stop recording
+            this.mediaRecorder.stop();
+            this.isRecording = false;
+            this.audioChunks = [];
         }
     }
 

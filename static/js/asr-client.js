@@ -5,102 +5,93 @@ class ASRProcessor {
         }
         this.recognition = null;
         this.isListening = false;
-        this.accumulatedText = '';
     }
 
-    startRecording() {
-        console.log('[ASR Debug] Starting recording immediately...');
-        
-        if (this.isListening) {
-            console.log('[ASR Debug] Already recording, stopping previous session');
-            this.stopListening();
-        }
+    async processAudio(audioBlob, expectedText) {
+        console.log('[ASR Debug] Starting audio processing...', new Date().toISOString());
+        console.log('[ASR Debug] Expected text:', expectedText);
 
-        // Create a new instance for each recording
-        this.recognition = new webkitSpeechRecognition();
-        this.recognition.continuous = true;
-        this.recognition.interimResults = true; // Changed to true to get real-time results
-        this.recognition.lang = 'en-US';
-        this.accumulatedText = ''; // Reset accumulated text
-
-        this.recognition.onstart = () => {
-            console.log('[ASR Debug] Recognition started at:', new Date().toISOString());
-            this.isListening = true;
-        };
-
-        this.recognition.onresult = (event) => {
-            // Get the latest result
-            const latestResult = event.results[event.results.length - 1][0].transcript;
-            console.log('[ASR Debug] Latest result:', latestResult);
-            
-            // Update accumulated text only with final results
-            if (event.results[event.results.length - 1].isFinal) {
-                this.accumulatedText = this.accumulatedText + ' ' + latestResult;
-                console.log('[ASR Debug] Accumulated final text:', this.accumulatedText.trim());
-            }
-        };
-
-        this.recognition.onerror = (event) => {
-            console.error('[ASR Debug] Recognition error:', event.error);
-            this.isListening = false;
-        };
-
-        this.recognition.onend = () => {
-            if (this.isListening) {
-                console.log('[ASR Debug] Recognition ended unexpectedly, restarting...');
-                this.recognition.start();
-            }
-        };
-
-        try {
-            this.recognition.start();
-        } catch (error) {
-            console.error('[ASR Debug] Failed to start recording:', error);
-            throw error;
-        }
-    }
-
-    async stopAndProcess(expectedText) {
-        console.log('[ASR Debug] Stopping recording and processing results...');
-        this.isListening = false;
-        
         return new Promise((resolve, reject) => {
-            if (!this.recognition) {
-                reject(new Error('No recording in progress'));
-                return;
-            }
+            // Create a new instance for each recognition
+            this.recognition = new webkitSpeechRecognition();
+            this.recognition.continuous = false; // Changed to false since we're processing a complete recording
+            this.recognition.interimResults = false;
+            this.recognition.lang = 'en-US';
 
-            const processResults = () => {
-                if (this.accumulatedText) {
-                    console.log('[ASR Debug] Processing final text:', this.accumulatedText);
-                    const results = this.compareTexts(this.accumulatedText.trim(), expectedText);
-                    console.log('[ASR Debug] Final results:', results);
-                    resolve({
-                        success: true,
-                        results
-                    });
-                } else {
-                    reject(new Error('No speech detected'));
-                }
+            let recognitionStartTime = Date.now();
+
+            this.recognition.onstart = () => {
+                console.log('[ASR Debug] Recognition started at:', new Date().toISOString());
             };
 
-            // If recognition is still running, wait for it to end
-            if (this.recognition.state === 'running') {
-                this.recognition.onend = processResults;
-                this.recognition.stop();
+            this.recognition.onresult = (event) => {
+                const processingTime = Date.now() - recognitionStartTime;
+                console.log(`[ASR Debug] Result received after ${processingTime}ms`);
+                
+                // Get the final result
+                const transcript = event.results[0][0].transcript;
+                console.log('[ASR Debug] Transcript:', transcript);
+                console.log('[ASR Debug] Confidence:', event.results[0][0].confidence);
+
+                // Process results immediately
+                const results = this.compareTexts(transcript, expectedText);
+                console.log('[ASR Debug] Final results:', results);
+                resolve({
+                    success: true,
+                    results
+                });
+            };
+
+            this.recognition.onerror = (event) => {
+                console.error('[ASR Debug] Recognition error:', event.error);
+                console.error('[ASR Debug] Error details:', event);
+                reject({
+                    success: false,
+                    error: event.error
+                });
+            };
+
+            this.recognition.onend = () => {
+                const totalTime = Date.now() - recognitionStartTime;
+                console.log(`[ASR Debug] Recognition ended. Total time: ${totalTime}ms`);
+            };
+
+            // If we have an audio blob, create an audio element and play it
+            if (audioBlob) {
+                const audio = new Audio(URL.createObjectURL(audioBlob));
+                audio.addEventListener('ended', () => {
+                    console.log('[ASR Debug] Finished playing audio');
+                    this.recognition.stop();
+                });
+
+                // Start recognition before playing
+                try {
+                    console.log('[ASR Debug] Starting recognition and playing audio...');
+                    this.recognition.start();
+                    audio.play();
+                } catch (error) {
+                    console.error('[ASR Debug] Failed to start recognition:', error);
+                    reject({
+                        success: false,
+                        error: error.message
+                    });
+                }
             } else {
-                processResults();
+                reject({
+                    success: false,
+                    error: 'No audio blob provided'
+                });
             }
         });
     }
 
     stopListening() {
-        if (this.recognition) {
+        if (this.recognition && this.isListening) {
             this.isListening = false;
             try {
                 this.recognition.stop();
             } catch (error) {
-                console.error('[ASR Debug] Error stopping recognition:', error);
+                console.error('Error stopping recognition:', error);
             }
         }
     }
