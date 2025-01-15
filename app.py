@@ -18,8 +18,7 @@ class Score(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 with app.app_context():
-    db.drop_all()
-    db.create_all()
+    db.create_all()  # This will only create tables if they don't exist
 
 # Store scores in memory (you might want to use a database in production)
 scores = {}
