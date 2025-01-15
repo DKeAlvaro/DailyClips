@@ -20,10 +20,12 @@ class Score(db.Model):
 
 def init_db():
     with app.app_context():
-        # Use inspect to properly check if table exists
-        inspector = inspect(db.engine)
-        if not 'score' in inspector.get_table_names():
+        try:
             db.create_all()
+        except Exception as e:
+            # If table already exists, just pass
+            print(f"Database initialization: {str(e)}")
+            pass
 
 # Replace the current db.create_all() with init_db() call
 init_db()
