@@ -14,7 +14,6 @@ class VideoController {
         this.accuracies = [];  // Store accuracies for current session
         this.mediaRecorder = null;
         this.audioChunks = [];
-        this.recordingStream = null;
 
         // Create loading spinner for desktop
         this.loadingSpinner = document.createElement('div');
@@ -214,72 +213,37 @@ window.addEventListener('load', () => {
     async startRecording() {
         try {
             console.log('[Recording Debug] Requesting microphone permission...');
-            // Get microphone stream
-            this.recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             console.log('[Recording Debug] Microphone permission granted');
-            
-            // Setup MediaRecorder
-            this.mediaRecorder = new MediaRecorder(this.recordingStream);
-            this.audioChunks = [];
-
-            this.mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    this.audioChunks.push(event.data);
-                }
-            };
-
-            // Start recording immediately
-            this.mediaRecorder.start();
-            console.log('[Recording Debug] Started MediaRecorder');
             
             this.isRecording = true;
             this.recordBtn.textContent = 'Stop Recording';
             this.mobileRecordBtn.textContent = 'Stop Recording';
             this.recordBtn.classList.add('recording');
             this.mobileRecordBtn.classList.add('recording');
-            
-        } catch (error) {
-            console.error('[Recording Debug] Error accessing microphone:', error);
-            // Hide loading spinner if it's showing
-            this.loadingSpinner.style.display = 'none';
-            this.mobileLoadingSpinner.style.display = 'none';
-            
-            // Show error message on buttons
-            this.recordBtn.style.display = 'block';
-            this.mobileRecordBtn.style.display = 'block';
-            this.recordBtn.textContent = 'Allow Microphone';
-            this.mobileRecordBtn.textContent = 'Allow Microphone';
-            this.recordBtn.classList.add('error');
-            this.mobileRecordBtn.classList.add('error');
-            this.recordBtn.disabled = false;
-            this.mobileRecordBtn.disabled = false;
-            
-            // Add error styling
-            this.recordBtn.style.background = 'linear-gradient(45deg, rgba(255, 59, 48, 0.4), rgba(255, 79, 68, 0.4))';
-            this.mobileRecordBtn.style.background = 'linear-gradient(45deg, rgba(255, 59, 48, 0.4), rgba(255, 79, 68, 0.4))';
-        }
-    }
 
-    stopRecording() {
-        console.log('[Recording Debug] Stopping recording...');
-        if (this.isRecording && this.mediaRecorder) {
-            this.showLoadingSpinner();
+            // Initialize MediaRecorder
+            this.audioChunks = [];
+            this.mediaRecorder = new MediaRecorder(stream);
             
-            this.mediaRecorder.onstop = async () => {
-                // Clean up stream tracks
-                if (this.recordingStream) {
-                    this.recordingStream.getTracks().forEach(track => track.stop());
-                    this.recordingStream = null;
+            console.log('[Recording Debug] Setting up MediaRecorder...');
+            
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    console.log('[Recording Debug] Received audio chunk:', event.data.size, 'bytes');
+                    this.audioChunks.push(event.data);
                 }
+            };
 
-                // Create audio blob from chunks
+            this.mediaRecorder.onstop = async () => {
+                console.log('[Recording Debug] MediaRecorder stopped, processing audio...');
+                stream.getTracks().forEach(track => track.stop());
+                
                 const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-                console.log('[Recording Debug] Audio recorded, size:', audioBlob.size);
-
+                console.log('[Recording Debug] Audio blob created, size:', audioBlob.size, 'bytes');
+                
                 try {
-                    console.log('[Recording Debug] Starting ASR processing...');
-                    console.log('[Recording Debug] Current subtitle:', subtitlesData[this.currentSubtitleIndex].text);
-                    
+                    console.log('[Recording Debug] Starting ASR processing with audio blob');
                     const results = await this.asrProcessor.processAudio(
                         audioBlob,
                         subtitlesData[this.currentSubtitleIndex].text
@@ -300,10 +264,35 @@ window.addEventListener('load', () => {
                 }
             };
 
-            // Stop recording
-            this.mediaRecorder.stop();
+            console.log('[Recording Debug] Starting MediaRecorder...');
+            this.mediaRecorder.start();
+            
+        } catch (error) {
+            console.error('[Recording Debug] Error accessing microphone:', error);
+            this.loadingSpinner.style.display = 'none';
+            this.mobileLoadingSpinner.style.display = 'none';
+            
+            this.recordBtn.style.display = 'block';
+            this.mobileRecordBtn.style.display = 'block';
+            this.recordBtn.textContent = 'Allow Microphone';
+            this.mobileRecordBtn.textContent = 'Allow Microphone';
+            this.recordBtn.classList.add('error');
+            this.mobileRecordBtn.classList.add('error');
+            this.recordBtn.disabled = false;
+            this.mobileRecordBtn.disabled = false;
+            
+            this.recordBtn.style.background = 'linear-gradient(45deg, rgba(255, 59, 48, 0.4), rgba(255, 79, 68, 0.4))';
+            this.mobileRecordBtn.style.background = 'linear-gradient(45deg, rgba(255, 59, 48, 0.4), rgba(255, 79, 68, 0.4))';
+        }
+    }
+
+    stopRecording() {
+        console.log('[Recording Debug] Stopping recording...');
+        if (this.isRecording && this.mediaRecorder) {
             this.isRecording = false;
-            this.audioChunks = [];
+            console.log('[Recording Debug] Stopping MediaRecorder...');
+            this.mediaRecorder.stop();
+            this.showLoadingSpinner();
         }
     }
 
