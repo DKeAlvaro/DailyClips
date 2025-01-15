@@ -267,8 +267,12 @@ window.addEventListener('load', () => {
     stopRecording() {
         if (this.isRecording) {
             this.isRecording = false;
+            if (this.asrProcessor.recognition && this.asrProcessor.recognition.accumulatedText) {
+                this.showLoadingSpinner();
+            } else {
+                this.showRecordButton();
+            }
             this.asrProcessor.stopListening();
-            this.showLoadingSpinner();
         }
     }
 
