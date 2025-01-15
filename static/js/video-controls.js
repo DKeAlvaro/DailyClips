@@ -229,55 +229,28 @@ window.addEventListener('load', () => {
             this.recordBtn.classList.add('recording');
             this.mobileRecordBtn.classList.add('recording');
 
-            // Initialize MediaRecorder with specific MIME type and settings
-            this.audioChunks = [];
-            const options = {
-                mimeType: 'audio/webm;codecs=opus',
-                audioBitsPerSecond: 16000
-            };
-            
-            console.log('[Recording Debug] Setting up MediaRecorder...');
-            this.mediaRecorder = new MediaRecorder(stream, options);
-            
-            this.mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    console.log('[Recording Debug] Received audio chunk:', event.data.size, 'bytes');
-                    this.audioChunks.push(event.data);
-                }
-            };
-
-            this.mediaRecorder.onstop = async () => {
-                console.log('[Recording Debug] MediaRecorder stopped, processing audio...');
-                stream.getTracks().forEach(track => track.stop());
+            try {
+                console.log('[Recording Debug] Starting ASR processing...');
+                const results = await this.asrProcessor.processAudio(
+                    subtitlesData[this.currentSubtitleIndex].text
+                );
                 
-                const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm;codecs=opus' });
-                console.log('[Recording Debug] Audio blob created, size:', audioBlob.size, 'bytes');
-                
-                try {
-                    console.log('[Recording Debug] Starting ASR processing with audio blob');
-                    const results = await this.asrProcessor.processAudio(
-                        audioBlob,
-                        subtitlesData[this.currentSubtitleIndex].text
-                    );
-                    
-                    if (results.success) {
-                        console.log('[Recording Debug] ASR processing successful');
-                        this.showResults(results.results);
-                    } else {
-                        console.error('[Recording Debug] Error in results:', results.error);
-                        this.showRecordButton();
-                    }
-                } catch (error) {
-                    console.error('[Recording Debug] Speech recognition error:', error);
+                if (results.success) {
+                    console.log('[Recording Debug] ASR processing successful');
+                    this.showResults(results.results);
+                } else {
+                    console.error('[Recording Debug] Error in results:', results.error);
                     this.showRecordButton();
-                    this.recordBtn.textContent = 'Try Again';
-                    this.mobileRecordBtn.textContent = 'Try Again';
                 }
-            };
-
-            console.log('[Recording Debug] Starting MediaRecorder...');
-            // Request data every 250ms for more frequent updates
-            this.mediaRecorder.start(250);
+            } catch (error) {
+                console.error('[Recording Debug] Speech recognition error:', error);
+                this.showRecordButton();
+                this.recordBtn.textContent = 'Try Again';
+                this.mobileRecordBtn.textContent = 'Try Again';
+            } finally {
+                // Always clean up the stream
+                stream.getTracks().forEach(track => track.stop());
+            }
             
         } catch (error) {
             console.error('[Recording Debug] Error accessing microphone:', error);
@@ -300,10 +273,9 @@ window.addEventListener('load', () => {
 
     stopRecording() {
         console.log('[Recording Debug] Stopping recording...');
-        if (this.isRecording && this.mediaRecorder) {
+        if (this.isRecording) {
             this.isRecording = false;
-            console.log('[Recording Debug] Stopping MediaRecorder...');
-            this.mediaRecorder.stop();
+            this.asrProcessor.stopListening();
             this.showLoadingSpinner();
         }
     }

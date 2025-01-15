@@ -7,10 +7,9 @@ class ASRProcessor {
         this.isListening = false;
     }
 
-    async processAudio(audioBlob, expectedText) {
-        console.log('[ASR Debug] Starting audio processing...', new Date().toISOString());
+    async processAudio(expectedText) {
+        console.log('[ASR Debug] Starting real-time audio processing...');
         console.log('[ASR Debug] Expected text:', expectedText);
-        console.log('[ASR Debug] Audio blob size:', audioBlob?.size || 'No blob');
 
         if (this.isListening) {
             console.log('[ASR Debug] Already listening, stopping previous session');
@@ -20,25 +19,36 @@ class ASRProcessor {
         return new Promise((resolve, reject) => {
             // Create a new instance for each recognition
             this.recognition = new webkitSpeechRecognition();
-            this.recognition.continuous = false;
-            this.recognition.interimResults = false;
+            this.recognition.continuous = true;
+            this.recognition.interimResults = true;
             this.recognition.lang = 'en-US';
 
             let recognitionStartTime = Date.now();
             let finalText = '';
+            let lastInterimResult = '';
 
             this.recognition.onstart = () => {
                 console.log('[ASR Debug] Recognition started at:', new Date().toISOString());
+                this.isListening = true;
             };
 
             this.recognition.onresult = (event) => {
                 const processingTime = Date.now() - recognitionStartTime;
-                console.log(`[ASR Debug] Result received after ${processingTime}ms`);
                 
-                // Get the final result
-                finalText = event.results[0][0].transcript;
-                console.log('[ASR Debug] Recognition result:', finalText);
-                console.log('[ASR Debug] Confidence:', event.results[0][0].confidence);
+                // Get the latest result
+                const result = event.results[event.results.length - 1];
+                
+                if (result.isFinal) {
+                    finalText = result[0].transcript;
+                    console.log('[ASR Debug] Final result received after', processingTime, 'ms:', finalText);
+                    console.log('[ASR Debug] Confidence:', result[0].confidence);
+                } else {
+                    const interimResult = result[0].transcript;
+                    if (interimResult !== lastInterimResult) {
+                        console.log('[ASR Debug] Interim result:', interimResult);
+                        lastInterimResult = interimResult;
+                    }
+                }
             };
 
             this.recognition.onerror = (event) => {
@@ -54,6 +64,7 @@ class ASRProcessor {
             this.recognition.onend = () => {
                 const totalTime = Date.now() - recognitionStartTime;
                 console.log(`[ASR Debug] Recognition ended. Total time: ${totalTime}ms`);
+                this.isListening = false;
                 
                 if (finalText) {
                     console.log('[ASR Debug] Processing final text:', finalText);
@@ -72,56 +83,14 @@ class ASRProcessor {
                 }
             };
 
-            if (audioBlob) {
-                // Create an audio context
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                console.log('[ASR Debug] Created audio context, sample rate:', audioContext.sampleRate);
-
-                // Convert blob to array buffer
-                const fileReader = new FileReader();
-                fileReader.onload = async () => {
-                    try {
-                        console.log('[ASR Debug] Audio file loaded, decoding...');
-                        const arrayBuffer = fileReader.result;
-                        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-                        console.log('[ASR Debug] Audio decoded, duration:', audioBuffer.duration, 'seconds');
-
-                        // Create audio source
-                        const source = audioContext.createBufferSource();
-                        source.buffer = audioBuffer;
-
-                        // Create media stream destination
-                        const streamDestination = audioContext.createMediaStreamDestination();
-                        source.connect(streamDestination);
-
-                        // Start recognition with the stream
-                        console.log('[ASR Debug] Starting recognition with audio stream');
-                        this.recognition.start();
-                        source.start(0);
-                        this.isListening = true;
-
-                    } catch (error) {
-                        console.error('[ASR Debug] Error processing audio:', error);
-                        reject({
-                            success: false,
-                            error: 'Error processing audio'
-                        });
-                    }
-                };
-
-                fileReader.onerror = (error) => {
-                    console.error('[ASR Debug] Error reading audio file:', error);
-                    reject({
-                        success: false,
-                        error: 'Error reading audio file'
-                    });
-                };
-
-                fileReader.readAsArrayBuffer(audioBlob);
-            } else {
+            try {
+                console.log('[ASR Debug] Starting recognition...');
+                this.recognition.start();
+            } catch (error) {
+                console.error('[ASR Debug] Error starting recognition:', error);
                 reject({
                     success: false,
-                    error: 'No audio blob provided'
+                    error: error.message
                 });
             }
         });
