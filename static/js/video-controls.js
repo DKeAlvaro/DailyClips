@@ -13,11 +13,17 @@ class VideoController {
         this.asrProcessor = new ASRProcessor();
         this.accuracies = [];  // Store accuracies for current session
 
-        // Create loading spinner
+        // Create loading spinner for desktop
         this.loadingSpinner = document.createElement('div');
         this.loadingSpinner.className = 'loading-spinner';
         this.loadingSpinner.style.display = 'none';
         document.querySelector('.controls').appendChild(this.loadingSpinner);
+
+        // Create loading spinner for mobile
+        this.mobileLoadingSpinner = document.createElement('div');
+        this.mobileLoadingSpinner.className = 'loading-spinner';
+        this.mobileLoadingSpinner.style.display = 'none';
+        document.querySelector('.mobile-controls').appendChild(this.mobileLoadingSpinner);
 
         // Create results overlay
         this.resultsOverlay = document.createElement('div');
@@ -293,6 +299,7 @@ window.addEventListener('load', () => {
         this.playPauseBtn.style.display = 'none';
         this.mobilePlayPauseBtn.style.display = 'none';
         this.loadingSpinner.style.display = 'none';
+        this.mobileLoadingSpinner.style.display = 'none';
         this.recordBtn.style.display = 'block';
         this.mobileRecordBtn.style.display = 'block';
         this.recordBtn.textContent = 'Record';
@@ -320,19 +327,15 @@ window.addEventListener('load', () => {
         this.mobileRecordBtn.style.display = 'none';
         this.playPauseBtn.style.display = 'none';
         this.mobilePlayPauseBtn.style.display = 'none';
-        
-        // Create mobile loading spinner if it doesn't exist
-        if (!this.mobileLoadingSpinner) {
-            this.mobileLoadingSpinner = document.createElement('div');
-            this.mobileLoadingSpinner.className = 'loading-spinner';
-            document.querySelector('.mobile-controls').appendChild(this.mobileLoadingSpinner);
-        }
-        
         this.loadingSpinner.style.display = 'block';
         this.mobileLoadingSpinner.style.display = 'block';
     }
 
     showResults(results) {
+        // Hide loading spinners first
+        this.loadingSpinner.style.display = 'none';
+        this.mobileLoadingSpinner.style.display = 'none';
+
         // Play appropriate sound based on score
         const score = results.pronunciation_accuracy;
         if (score <= 30) {
