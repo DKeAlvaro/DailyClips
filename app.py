@@ -17,8 +17,14 @@ class Score(db.Model):
     score = db.Column(db.Float, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-with app.app_context():
-    db.create_all()  # This will only create tables if they don't exist
+def init_db():
+    with app.app_context():
+        # Check if the table exists before creating
+        if not db.engine.dialect.has_table(db.engine, 'score'):
+            db.create_all()
+
+# Replace the current db.create_all() with init_db() call
+init_db()
 
 # Store scores in memory (you might want to use a database in production)
 scores = {}
