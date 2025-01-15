@@ -7,6 +7,7 @@ class ASRProcessor {
         this.isListening = false;
         this.accumulatedText = '';
         this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        this.isRestarting = false;
     }
 
     async processAudio(expectedText) {
@@ -25,8 +26,8 @@ class ASRProcessor {
             
             // Different settings for mobile vs desktop
             if (this.isMobile) {
-                this.recognition.continuous = false;
-                this.recognition.interimResults = false;
+                this.recognition.continuous = true;
+                this.recognition.interimResults = true;
             } else {
                 this.recognition.continuous = true;
                 this.recognition.interimResults = true;
@@ -35,17 +36,20 @@ class ASRProcessor {
             this.recognition.lang = 'en-US';
             let recognitionStartTime = Date.now();
             let lastInterimResult = '';
-            let restartTimeout = null;
 
             this.recognition.onstart = () => {
                 console.log('[ASR Debug] Recognition started at:', new Date().toISOString());
                 this.isListening = true;
+                this.isRestarting = false;
             };
 
             this.recognition.onresult = (event) => {
                 const processingTime = Date.now() - recognitionStartTime;
                 
-                for (let i = 0; i < event.results.length; i++) {
+                // Get only the new results since last time
+                const currentLength = event.results.length;
+                
+                for (let i = event.resultIndex; i < currentLength; i++) {
                     const result = event.results[i];
                     
                     if (result.isFinal) {
@@ -60,17 +64,7 @@ class ASRProcessor {
                         this.accumulatedText += finalText;
                         console.log('[ASR Debug] Accumulated text:', this.accumulatedText);
                         
-                        // For mobile, we'll resolve after getting the first final result
-                        if (this.isMobile) {
-                            const results = this.compareTexts(this.accumulatedText, expectedText);
-                            resolve({
-                                success: true,
-                                results
-                            });
-                            this.stopListening();
-                            return;
-                        }
-                    } else if (!this.isMobile) {
+                    } else {
                         const interimResult = result[0].transcript;
                         if (interimResult !== lastInterimResult) {
                             console.log('[ASR Debug] Interim result:', interimResult);
@@ -78,54 +72,55 @@ class ASRProcessor {
                         }
                     }
                 }
-
-                // For desktop, restart recognition if it ends but we're still listening
-                if (!this.isMobile) {
-                    clearTimeout(restartTimeout);
-                    restartTimeout = setTimeout(() => {
-                        if (this.isListening) {
-                            try {
-                                console.log('[ASR Debug] Restarting recognition to continue listening...');
-                                this.recognition.start();
-                            } catch (error) {
-                                console.error('[ASR Debug] Error restarting recognition:', error);
-                            }
-                        }
-                    }, 50);
-                }
             };
 
             this.recognition.onerror = (event) => {
                 console.error('[ASR Debug] Recognition error:', event.error);
                 console.error('[ASR Debug] Error details:', event);
                 
-                // Don't reject on no-speech error for desktop, as we might still be listening
-                if (this.isMobile || event.error !== 'no-speech') {
-                    this.isListening = false;
-                    reject({
-                        success: false,
-                        error: event.error
-                    });
+                if (event.error === 'no-speech') {
+                    // Don't reject on no-speech, just log it
+                    console.log('[ASR Debug] No speech detected, continuing...');
+                    return;
                 }
+                
+                this.isListening = false;
+                reject({
+                    success: false,
+                    error: event.error
+                });
             };
 
             this.recognition.onend = () => {
                 const totalTime = Date.now() - recognitionStartTime;
                 console.log(`[ASR Debug] Recognition ended. Total time: ${totalTime}ms`);
                 
-                // For desktop, only process when explicitly stopped
-                if (!this.isMobile && !this.isListening && this.accumulatedText) {
-                    console.log('[ASR Debug] Processing final accumulated text:', this.accumulatedText);
-                    const results = this.compareTexts(this.accumulatedText, expectedText);
-                    resolve({
-                        success: true,
-                        results
-                    });
-                } else if (!this.isMobile && this.isListening) {
-                    // Restart recognition for desktop if we're still listening
+                if (!this.isListening) {
+                    // Only process results if we explicitly stopped listening
+                    if (this.accumulatedText) {
+                        console.log('[ASR Debug] Processing final accumulated text:', this.accumulatedText);
+                        const results = this.compareTexts(this.accumulatedText, expectedText);
+                        resolve({
+                            success: true,
+                            results
+                        });
+                    } else {
+                        console.error('[ASR Debug] No text was recognized');
+                        reject({
+                            success: false,
+                            error: 'No speech was recognized'
+                        });
+                    }
+                } else if (!this.isRestarting) {
+                    // Restart recognition if we're still supposed to be listening
+                    this.isRestarting = true;
                     try {
-                        console.log('[ASR Debug] Restarting recognition to continue listening...');
-                        this.recognition.start();
+                        console.log('[ASR Debug] Restarting recognition...');
+                        setTimeout(() => {
+                            if (this.isListening) {
+                                this.recognition.start();
+                            }
+                        }, 100);
                     } catch (error) {
                         console.error('[ASR Debug] Error restarting recognition:', error);
                     }
@@ -147,11 +142,13 @@ class ASRProcessor {
 
     stopListening() {
         if (this.recognition && this.isListening) {
+            console.log('[ASR Debug] Stopping recognition...');
             this.isListening = false;
+            this.isRestarting = false;
             try {
                 this.recognition.stop();
             } catch (error) {
-                console.error('Error stopping recognition:', error);
+                console.error('[ASR Debug] Error stopping recognition:', error);
             }
         }
     }
