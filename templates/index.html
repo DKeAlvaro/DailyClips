@@ -221,9 +221,6 @@
                 });
         }
 
-        // Update global scores every 30 seconds
-        setInterval(updateGlobalScores, 30000);
-
         // Function to update chart with new score
         function updateAccuracyChart(newScore) {
             const binIndex = Math.min(Math.floor(newScore / 15), 6);

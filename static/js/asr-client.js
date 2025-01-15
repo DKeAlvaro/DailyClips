@@ -15,18 +15,19 @@ class ASRProcessor {
         return new Promise((resolve, reject) => {
             // Create a new instance for each recognition
             this.recognition = new webkitSpeechRecognition();
-            this.recognition.continuous = false;
+            this.recognition.continuous = true;
             this.recognition.interimResults = false;
             this.recognition.lang = 'en-US';
 
+            let accumulatedText = '';
+
             this.recognition.onresult = (event) => {
-                this.isListening = false;
-                const recordedText = event.results[0][0].transcript;
-            const results = this.compareTexts(recordedText, expectedText);
-                resolve({
-                success: true,
-                results
-                });
+                // Get the latest result
+                const latestResult = event.results[event.results.length - 1][0].transcript;
+                accumulatedText = accumulatedText + ' ' + latestResult;
+                
+                // Store the accumulated text for when we stop
+                this.recognition.accumulatedText = accumulatedText.trim();
             };
 
             this.recognition.onerror = (event) => {
@@ -38,26 +39,21 @@ class ASRProcessor {
             };
 
             this.recognition.onend = () => {
-                this.isListening = false;
-                // If no result was received, reject
-                if (!this.recognition.resultReceived) {
-                    reject({
-                success: false,
-                        error: 'No speech detected'
+                // Only process results if we explicitly stopped listening
+                if (!this.isListening && this.recognition.accumulatedText) {
+                    const results = this.compareTexts(this.recognition.accumulatedText, expectedText);
+                    resolve({
+                        success: true,
+                        results
                     });
+                } else if (this.isListening) {
+                    // If we're still supposed to be listening, restart
+                    try {
+                        this.recognition.start();
+                    } catch (error) {
+                        console.error('Error restarting recognition:', error);
+                    }
                 }
-            };
-
-            // Add flag to track if we received a result
-            this.recognition.resultReceived = false;
-            this.recognition.onresult = (event) => {
-                this.recognition.resultReceived = true;
-                const recordedText = event.results[0][0].transcript;
-                const results = this.compareTexts(recordedText, expectedText);
-                resolve({
-                    success: true,
-                    results
-                });
             };
 
             try {
@@ -74,12 +70,12 @@ class ASRProcessor {
 
     stopListening() {
         if (this.recognition && this.isListening) {
+            this.isListening = false;
             try {
                 this.recognition.stop();
             } catch (error) {
                 console.error('Error stopping recognition:', error);
             }
-            this.isListening = false;
         }
     }
 
