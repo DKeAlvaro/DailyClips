@@ -5,11 +5,14 @@ class ASRProcessor {
         }
         this.recognition = null;
         this.isListening = false;
+        this.accumulatedText = '';
+        this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     }
 
     async processAudio(expectedText) {
         console.log('[ASR Debug] Starting real-time audio processing...');
         console.log('[ASR Debug] Expected text:', expectedText);
+        console.log('[ASR Debug] Device type:', this.isMobile ? 'Mobile' : 'Desktop');
 
         if (this.isListening) {
             console.log('[ASR Debug] Already listening, stopping previous session');
@@ -17,15 +20,22 @@ class ASRProcessor {
         }
 
         return new Promise((resolve, reject) => {
-            // Create a new instance for each recognition
+            this.accumulatedText = '';
             this.recognition = new webkitSpeechRecognition();
-            this.recognition.continuous = true;
-            this.recognition.interimResults = true;
+            
+            // Different settings for mobile vs desktop
+            if (this.isMobile) {
+                this.recognition.continuous = false;
+                this.recognition.interimResults = false;
+            } else {
+                this.recognition.continuous = true;
+                this.recognition.interimResults = true;
+            }
+            
             this.recognition.lang = 'en-US';
-
             let recognitionStartTime = Date.now();
-            let finalText = '';
             let lastInterimResult = '';
+            let restartTimeout = null;
 
             this.recognition.onstart = () => {
                 console.log('[ASR Debug] Recognition started at:', new Date().toISOString());
@@ -35,51 +45,90 @@ class ASRProcessor {
             this.recognition.onresult = (event) => {
                 const processingTime = Date.now() - recognitionStartTime;
                 
-                // Get the latest result
-                const result = event.results[event.results.length - 1];
-                
-                if (result.isFinal) {
-                    finalText = result[0].transcript;
-                    console.log('[ASR Debug] Final result received after', processingTime, 'ms:', finalText);
-                    console.log('[ASR Debug] Confidence:', result[0].confidence);
-                } else {
-                    const interimResult = result[0].transcript;
-                    if (interimResult !== lastInterimResult) {
-                        console.log('[ASR Debug] Interim result:', interimResult);
-                        lastInterimResult = interimResult;
+                for (let i = 0; i < event.results.length; i++) {
+                    const result = event.results[i];
+                    
+                    if (result.isFinal) {
+                        const finalText = result[0].transcript;
+                        console.log('[ASR Debug] Final result received after', processingTime, 'ms:', finalText);
+                        console.log('[ASR Debug] Confidence:', result[0].confidence);
+                        
+                        // Append to accumulated text with space
+                        if (this.accumulatedText) {
+                            this.accumulatedText += ' ';
+                        }
+                        this.accumulatedText += finalText;
+                        console.log('[ASR Debug] Accumulated text:', this.accumulatedText);
+                        
+                        // For mobile, we'll resolve after getting the first final result
+                        if (this.isMobile) {
+                            const results = this.compareTexts(this.accumulatedText, expectedText);
+                            resolve({
+                                success: true,
+                                results
+                            });
+                            this.stopListening();
+                            return;
+                        }
+                    } else if (!this.isMobile) {
+                        const interimResult = result[0].transcript;
+                        if (interimResult !== lastInterimResult) {
+                            console.log('[ASR Debug] Interim result:', interimResult);
+                            lastInterimResult = interimResult;
+                        }
                     }
+                }
+
+                // For desktop, restart recognition if it ends but we're still listening
+                if (!this.isMobile) {
+                    clearTimeout(restartTimeout);
+                    restartTimeout = setTimeout(() => {
+                        if (this.isListening) {
+                            try {
+                                console.log('[ASR Debug] Restarting recognition to continue listening...');
+                                this.recognition.start();
+                            } catch (error) {
+                                console.error('[ASR Debug] Error restarting recognition:', error);
+                            }
+                        }
+                    }, 50);
                 }
             };
 
             this.recognition.onerror = (event) => {
                 console.error('[ASR Debug] Recognition error:', event.error);
                 console.error('[ASR Debug] Error details:', event);
-                this.isListening = false;
-                reject({
-                    success: false,
-                    error: event.error
-                });
+                
+                // Don't reject on no-speech error for desktop, as we might still be listening
+                if (this.isMobile || event.error !== 'no-speech') {
+                    this.isListening = false;
+                    reject({
+                        success: false,
+                        error: event.error
+                    });
+                }
             };
 
             this.recognition.onend = () => {
                 const totalTime = Date.now() - recognitionStartTime;
                 console.log(`[ASR Debug] Recognition ended. Total time: ${totalTime}ms`);
-                this.isListening = false;
                 
-                if (finalText) {
-                    console.log('[ASR Debug] Processing final text:', finalText);
-                    const results = this.compareTexts(finalText, expectedText);
-                    console.log('[ASR Debug] Comparison results:', results);
+                // For desktop, only process when explicitly stopped
+                if (!this.isMobile && !this.isListening && this.accumulatedText) {
+                    console.log('[ASR Debug] Processing final accumulated text:', this.accumulatedText);
+                    const results = this.compareTexts(this.accumulatedText, expectedText);
                     resolve({
                         success: true,
                         results
                     });
-                } else {
-                    console.error('[ASR Debug] No text was recognized');
-                    reject({
-                        success: false,
-                        error: 'No speech was recognized'
-                    });
+                } else if (!this.isMobile && this.isListening) {
+                    // Restart recognition for desktop if we're still listening
+                    try {
+                        console.log('[ASR Debug] Restarting recognition to continue listening...');
+                        this.recognition.start();
+                    } catch (error) {
+                        console.error('[ASR Debug] Error restarting recognition:', error);
+                    }
                 }
             };
 
