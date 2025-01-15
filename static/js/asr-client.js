@@ -20,7 +20,7 @@ class ASRProcessor {
         return new Promise((resolve, reject) => {
             // Create a new instance for each recognition
             this.recognition = new webkitSpeechRecognition();
-            this.recognition.continuous = false; // Changed to false since we're processing complete audio
+            this.recognition.continuous = false;
             this.recognition.interimResults = false;
             this.recognition.lang = 'en-US';
 
@@ -29,7 +29,6 @@ class ASRProcessor {
 
             this.recognition.onstart = () => {
                 console.log('[ASR Debug] Recognition started at:', new Date().toISOString());
-                console.log('[ASR Debug] Processing complete audio blob');
             };
 
             this.recognition.onresult = (event) => {
@@ -73,34 +72,52 @@ class ASRProcessor {
                 }
             };
 
-            // Convert audio blob to audio element for processing
             if (audioBlob) {
-                console.log('[ASR Debug] Creating audio element from blob');
-                const audioURL = URL.createObjectURL(audioBlob);
-                const audio = new Audio(audioURL);
-                
-                audio.onloadedmetadata = () => {
-                    console.log('[ASR Debug] Audio duration:', audio.duration, 'seconds');
+                // Create an audio context
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('[ASR Debug] Created audio context, sample rate:', audioContext.sampleRate);
+
+                // Convert blob to array buffer
+                const fileReader = new FileReader();
+                fileReader.onload = async () => {
                     try {
-                        console.log('[ASR Debug] Starting recognition');
+                        console.log('[ASR Debug] Audio file loaded, decoding...');
+                        const arrayBuffer = fileReader.result;
+                        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                        console.log('[ASR Debug] Audio decoded, duration:', audioBuffer.duration, 'seconds');
+
+                        // Create audio source
+                        const source = audioContext.createBufferSource();
+                        source.buffer = audioBuffer;
+
+                        // Create media stream destination
+                        const streamDestination = audioContext.createMediaStreamDestination();
+                        source.connect(streamDestination);
+
+                        // Start recognition with the stream
+                        console.log('[ASR Debug] Starting recognition with audio stream');
                         this.recognition.start();
-                        audio.play();
+                        source.start(0);
+                        this.isListening = true;
+
                     } catch (error) {
-                        console.error('[ASR Debug] Error starting recognition:', error);
+                        console.error('[ASR Debug] Error processing audio:', error);
                         reject({
                             success: false,
-                            error: error.message
+                            error: 'Error processing audio'
                         });
                     }
                 };
 
-                audio.onerror = (error) => {
-                    console.error('[ASR Debug] Audio element error:', error);
+                fileReader.onerror = (error) => {
+                    console.error('[ASR Debug] Error reading audio file:', error);
                     reject({
                         success: false,
-                        error: 'Error loading audio'
+                        error: 'Error reading audio file'
                     });
                 };
+
+                fileReader.readAsArrayBuffer(audioBlob);
             } else {
                 reject({
                     success: false,

@@ -213,7 +213,14 @@ window.addEventListener('load', () => {
     async startRecording() {
         try {
             console.log('[Recording Debug] Requesting microphone permission...');
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    channelCount: 1,
+                    sampleRate: 16000,
+                    echoCancellation: true,
+                    noiseSuppression: true
+                }
+            });
             console.log('[Recording Debug] Microphone permission granted');
             
             this.isRecording = true;
@@ -222,11 +229,15 @@ window.addEventListener('load', () => {
             this.recordBtn.classList.add('recording');
             this.mobileRecordBtn.classList.add('recording');
 
-            // Initialize MediaRecorder
+            // Initialize MediaRecorder with specific MIME type and settings
             this.audioChunks = [];
-            this.mediaRecorder = new MediaRecorder(stream);
+            const options = {
+                mimeType: 'audio/webm;codecs=opus',
+                audioBitsPerSecond: 16000
+            };
             
             console.log('[Recording Debug] Setting up MediaRecorder...');
+            this.mediaRecorder = new MediaRecorder(stream, options);
             
             this.mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
@@ -239,7 +250,7 @@ window.addEventListener('load', () => {
                 console.log('[Recording Debug] MediaRecorder stopped, processing audio...');
                 stream.getTracks().forEach(track => track.stop());
                 
-                const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm;codecs=opus' });
                 console.log('[Recording Debug] Audio blob created, size:', audioBlob.size, 'bytes');
                 
                 try {
@@ -265,7 +276,8 @@ window.addEventListener('load', () => {
             };
 
             console.log('[Recording Debug] Starting MediaRecorder...');
-            this.mediaRecorder.start();
+            // Request data every 250ms for more frequent updates
+            this.mediaRecorder.start(250);
             
         } catch (error) {
             console.error('[Recording Debug] Error accessing microphone:', error);
