@@ -12,20 +12,12 @@ class VideoController {
         this.isTransitioning = false;
         this.asrProcessor = new ASRProcessor();
         this.accuracies = [];  // Store accuracies for current session
-        this.mediaRecorder = null;
-        this.audioChunks = [];
 
-        // Create loading spinner for desktop
+        // Create loading spinner
         this.loadingSpinner = document.createElement('div');
         this.loadingSpinner.className = 'loading-spinner';
         this.loadingSpinner.style.display = 'none';
         document.querySelector('.controls').appendChild(this.loadingSpinner);
-
-        // Create loading spinner for mobile
-        this.mobileLoadingSpinner = document.createElement('div');
-        this.mobileLoadingSpinner.className = 'loading-spinner';
-        this.mobileLoadingSpinner.style.display = 'none';
-        document.querySelector('.mobile-controls').appendChild(this.mobileLoadingSpinner);
 
         // Create results overlay
         this.resultsOverlay = document.createElement('div');
@@ -212,67 +204,44 @@ window.addEventListener('load', () => {
 
     async startRecording() {
         try {
-            console.log('[Recording Debug] Requesting microphone permission...');
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    channelCount: 1,
-                    sampleRate: 16000,
-                    echoCancellation: true,
-                    noiseSuppression: true
-                }
-            });
-            console.log('[Recording Debug] Microphone permission granted');
-            
             this.isRecording = true;
             this.recordBtn.textContent = 'Stop Recording';
             this.mobileRecordBtn.textContent = 'Stop Recording';
             this.recordBtn.classList.add('recording');
             this.mobileRecordBtn.classList.add('recording');
 
+            // Process the current subtitle text with Web Speech API
             try {
-                console.log('[Recording Debug] Starting ASR processing...');
                 const results = await this.asrProcessor.processAudio(
+                    null, // We don't need the blob anymore
                     subtitlesData[this.currentSubtitleIndex].text
                 );
                 
                 if (results.success) {
-                    console.log('[Recording Debug] ASR processing successful');
+                    console.log('ASR Results:', results);
                     this.showResults(results.results);
                 } else {
-                    console.error('[Recording Debug] Error in results:', results.error);
-                    this.showRecordButton();
+                    console.error('Error in results:', results.error);
+                    this.showRecordButton(); // Allow retry
                 }
             } catch (error) {
-                console.error('[Recording Debug] Speech recognition error:', error);
-                this.showRecordButton();
+                console.error('Speech recognition error:', error);
+                this.showRecordButton(); // Allow retry
+                // Show error message to user
                 this.recordBtn.textContent = 'Try Again';
                 this.mobileRecordBtn.textContent = 'Try Again';
-            } finally {
-                // Always clean up the stream
-                stream.getTracks().forEach(track => track.stop());
             }
             
         } catch (error) {
-            console.error('[Recording Debug] Error accessing microphone:', error);
-            this.loadingSpinner.style.display = 'none';
-            this.mobileLoadingSpinner.style.display = 'none';
-            
-            this.recordBtn.style.display = 'block';
-            this.mobileRecordBtn.style.display = 'block';
-            this.recordBtn.textContent = 'Allow Microphone';
-            this.mobileRecordBtn.textContent = 'Allow Microphone';
-            this.recordBtn.classList.add('error');
-            this.mobileRecordBtn.classList.add('error');
-            this.recordBtn.disabled = false;
-            this.mobileRecordBtn.disabled = false;
-            
-            this.recordBtn.style.background = 'linear-gradient(45deg, rgba(255, 59, 48, 0.4), rgba(255, 79, 68, 0.4))';
-            this.mobileRecordBtn.style.background = 'linear-gradient(45deg, rgba(255, 59, 48, 0.4), rgba(255, 79, 68, 0.4))';
+            console.error('Error accessing microphone:', error);
+            this.recordBtn.textContent = 'Microphone Error';
+            this.mobileRecordBtn.textContent = 'Microphone Error';
+            this.recordBtn.disabled = true;
+            this.mobileRecordBtn.disabled = true;
         }
     }
 
     stopRecording() {
-        console.log('[Recording Debug] Stopping recording...');
         if (this.isRecording) {
             this.isRecording = false;
             this.asrProcessor.stopListening();
@@ -281,7 +250,6 @@ window.addEventListener('load', () => {
     }
 
     toggleRecording() {
-        console.log('[Recording Debug] Toggle recording, current state:', this.isRecording);
         if (!this.isRecording) {
             this.startRecording();
         } else {
@@ -325,7 +293,6 @@ window.addEventListener('load', () => {
         this.playPauseBtn.style.display = 'none';
         this.mobilePlayPauseBtn.style.display = 'none';
         this.loadingSpinner.style.display = 'none';
-        this.mobileLoadingSpinner.style.display = 'none';
         this.recordBtn.style.display = 'block';
         this.mobileRecordBtn.style.display = 'block';
         this.recordBtn.textContent = 'Record';
@@ -353,15 +320,19 @@ window.addEventListener('load', () => {
         this.mobileRecordBtn.style.display = 'none';
         this.playPauseBtn.style.display = 'none';
         this.mobilePlayPauseBtn.style.display = 'none';
+        
+        // Create mobile loading spinner if it doesn't exist
+        if (!this.mobileLoadingSpinner) {
+            this.mobileLoadingSpinner = document.createElement('div');
+            this.mobileLoadingSpinner.className = 'loading-spinner';
+            document.querySelector('.mobile-controls').appendChild(this.mobileLoadingSpinner);
+        }
+        
         this.loadingSpinner.style.display = 'block';
         this.mobileLoadingSpinner.style.display = 'block';
     }
 
     showResults(results) {
-        // Hide loading spinners first
-        this.loadingSpinner.style.display = 'none';
-        this.mobileLoadingSpinner.style.display = 'none';
-
         // Play appropriate sound based on score
         const score = results.pronunciation_accuracy;
         if (score <= 30) {
