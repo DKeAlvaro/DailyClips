@@ -5,6 +5,7 @@ from datetime import datetime
 import csv
 from flask_sqlalchemy import SQLAlchemy
 import sys
+from sqlalchemy import inspect
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///scores.db'
@@ -19,8 +20,9 @@ class Score(db.Model):
 
 def init_db():
     with app.app_context():
-        # Check if the table exists before creating
-        if not db.engine.dialect.has_table(db.engine, 'score'):
+        # Use inspect to properly check if table exists
+        inspector = inspect(db.engine)
+        if not 'score' in inspector.get_table_names():
             db.create_all()
 
 # Replace the current db.create_all() with init_db() call
