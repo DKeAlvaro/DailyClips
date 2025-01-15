@@ -87,6 +87,9 @@ def download_videos_and_subtitles(n=3):
     seen_videos = get_seen_videos()
     added_videos = []
     video_files = list_files_in_folder(VIDEOS_FOLDER_ID, API_KEY)
+    if len(seen_videos) == len(video_files):
+        print("All videos already downloaded, restarting...")
+        open("seen_videos.txt", "w").close()
     for video_file in video_files:
         name = video_file['name']
         if name in seen_videos:
@@ -177,8 +180,8 @@ def main():
     # subtitle_id = get_subtitle_id(srt_name)
     # print(subtitle_id)
     # download_file(subtitle_id, srt_name, SUBTITLE_SAVE_PATH)
-
-    update_videos(n=1)
+    for i in range(5):
+        update_videos(n=1)
 
 if __name__ == "__main__":
     main()

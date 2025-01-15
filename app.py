@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 import csv
 from flask_sqlalchemy import SQLAlchemy
+import sys
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///scores.db'
@@ -151,4 +152,7 @@ def get_global_scores(video_index):
     })
 
 if __name__ == '__main__':
-    app.run(debug=False) 
+    if len(sys.argv) > 1 and sys.argv[1] == 'p':
+        app.run(host='0.0.0.0', port=5000, debug=False)
+    else:
+        app.run(debug=True) 
