@@ -233,6 +233,10 @@ window.addEventListener('load', () => {
 
     async startRecording() {
         try {
+            // First check if we have microphone access
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(track => track.stop()); // Clean up the test stream
+            
             this.isRecording = true;
             this.recordBtn.textContent = 'Stop Recording';
             this.mobileRecordBtn.textContent = 'Stop Recording';
@@ -261,10 +265,12 @@ window.addEventListener('load', () => {
             
         } catch (error) {
             console.error('Error accessing microphone:', error);
-            this.recordBtn.textContent = 'Microphone Error';
-            this.mobileRecordBtn.textContent = 'Microphone Error';
-            this.recordBtn.disabled = true;
-            this.mobileRecordBtn.disabled = true;
+            this.isRecording = false;
+            this.showRecordButton();
+            this.recordBtn.textContent = 'Allow Microphone Permission';
+            this.mobileRecordBtn.textContent = 'Allow Microphone Permission';
+            this.recordBtn.classList.remove('recording');
+            this.mobileRecordBtn.classList.remove('recording');
         }
     }
 
