@@ -80,29 +80,7 @@ class VideoController {
             if (this.accuracies.length > 0) {
                 const averageAccuracy = this.accuracies.reduce((a, b) => a + b, 0) / this.accuracies.length;
                 
-                // Create new chart container if it doesn't exist
-                let chartContainer = document.querySelector('.chart-container');
-                if (!chartContainer) {
-                    chartContainer = document.createElement('div');
-                    chartContainer.className = 'chart-container final';
-                    chartContainer.innerHTML = '<canvas id="accuracyChart"></canvas>';
-                    
-                    // Create new legend element
-                    const newLegend = document.createElement('div');
-                    newLegend.className = 'clip-legend';
-                    newLegend.textContent = document.querySelector('.clip-legend')?.textContent || '';
-                    
-                    // Insert legend and chart
-                    const mainContent = document.querySelector('.main-content');
-                    mainContent.insertBefore(newLegend, this.videoContainer.nextSibling);
-                    mainContent.insertBefore(chartContainer, newLegend.nextSibling);
-                    
-                    // Reinitialize the chart with the final score
-                    const ctx = document.getElementById('accuracyChart').getContext('2d');
-                    window.accuracyChart = createAccuracyChart(ctx, averageAccuracy);
-                }
-
-                // Send the average accuracy to the server
+                // First save the score and get updated global scores
                 fetch('/save_score', {
                     method: 'POST',
                     headers: {
@@ -117,19 +95,52 @@ class VideoController {
                 .then(data => {
                     console.log('Score saved:', data);
                     console.log('Final Average Score:', averageAccuracy.toFixed(1) + '%');
-                    // Update chart title with the final score
-                    if (window.accuracyChart) {
-                        window.accuracyChart.options.plugins.title.text = `Your Score: ${averageAccuracy.toFixed(1)}%`;
-                        window.accuracyChart.update();
+                    
+                    // Create new chart container if it doesn't exist
+                    let chartContainer = document.querySelector('.chart-container');
+                    if (!chartContainer) {
+                        chartContainer = document.createElement('div');
+                        chartContainer.className = 'chart-container final';
+                        chartContainer.innerHTML = '<canvas id="accuracyChart"></canvas>';
+                        
+                        // Create new legend element
+                        const newLegend = document.createElement('div');
+                        newLegend.className = 'clip-legend';
+                        newLegend.textContent = document.querySelector('.clip-legend')?.textContent || '';
+                        
+                        // Insert legend and chart
+                        const mainContent = document.querySelector('.main-content');
+                        mainContent.insertBefore(newLegend, this.videoContainer.nextSibling);
+                        mainContent.insertBefore(chartContainer, newLegend.nextSibling);
+                        
+                        // Initialize the chart with the final score after getting updated global scores
+                        const ctx = document.getElementById('accuracyChart').getContext('2d');
+                        window.accuracyChart = createAccuracyChart(ctx, averageAccuracy);
                     }
                     this.finishSound.play();
                 })
                 .catch(error => {
                     console.error('Error saving score:', error);
-                    // Still update chart title even if save fails
-                    if (window.accuracyChart) {
-                        window.accuracyChart.options.plugins.title.text = `Your Score: ${averageAccuracy.toFixed(1)}%`;
-                        window.accuracyChart.update();
+                    // Create chart even if save fails
+                    let chartContainer = document.querySelector('.chart-container');
+                    if (!chartContainer) {
+                        chartContainer = document.createElement('div');
+                        chartContainer.className = 'chart-container final';
+                        chartContainer.innerHTML = '<canvas id="accuracyChart"></canvas>';
+                        
+                        // Create new legend element
+                        const newLegend = document.createElement('div');
+                        newLegend.className = 'clip-legend';
+                        newLegend.textContent = document.querySelector('.clip-legend')?.textContent || '';
+                        
+                        // Insert legend and chart
+                        const mainContent = document.querySelector('.main-content');
+                        mainContent.insertBefore(newLegend, this.videoContainer.nextSibling);
+                        mainContent.insertBefore(chartContainer, newLegend.nextSibling);
+                        
+                        // Initialize the chart with the final score
+                        const ctx = document.getElementById('accuracyChart').getContext('2d');
+                        window.accuracyChart = createAccuracyChart(ctx, averageAccuracy);
                     }
                     this.finishSound.play();
                 });
@@ -518,7 +529,7 @@ function createAccuracyChart(ctx, finalScore) {
                 },
                 title: {
                     display: true,
-                    text: finalScore ? `Your Score: ${Math.round(finalScore)}%` : 'Your Score',
+                    text: `Your Score: ${Math.round(finalScore)}%`,
                     color: '#fff',
                     font: {
                         family: 'Inter',
@@ -586,9 +597,9 @@ function createAccuracyChart(ctx, finalScore) {
                     });
                     
                     const averageScore = totalScore / data.scores.length;
-                    chart.options.plugins.subtitle.text = `Global Score: ${Math.round(averageScore)}% -- ${data.scores.length} attempts`;
+                    chart.options.plugins.subtitle.text = `Global Average: ${Math.round(averageScore)}% (${data.scores.length} attempts)`;
                 } else {
-                    chart.options.plugins.subtitle.text = 'No scores yet';
+                    chart.options.plugins.subtitle.text = 'No previous attempts';
                 }
                 
                 chart.data.datasets[0].data = scoreDistribution;
