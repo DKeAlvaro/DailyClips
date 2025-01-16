@@ -90,6 +90,7 @@ def download_videos_and_subtitles(n=3):
     if len(seen_videos) == len(video_files):
         print("All videos already downloaded, restarting...")
         open("seen_videos.txt", "w").close()
+        seen_videos = set()
     for video_file in video_files:
         name = video_file['name']
         if name in seen_videos:
@@ -180,8 +181,7 @@ def main():
     # subtitle_id = get_subtitle_id(srt_name)
     # print(subtitle_id)
     # download_file(subtitle_id, srt_name, SUBTITLE_SAVE_PATH)
-    for i in range(5):
-        update_videos(n=1)
+    update_videos(n=1)
 
 if __name__ == "__main__":
     main()

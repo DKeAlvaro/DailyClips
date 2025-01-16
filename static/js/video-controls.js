@@ -80,6 +80,25 @@ class VideoController {
             if (this.accuracies.length > 0) {
                 const averageAccuracy = this.accuracies.reduce((a, b) => a + b, 0) / this.accuracies.length;
                 
+                // Create new chart container if it doesn't exist
+                let chartContainer = document.querySelector('.chart-container');
+                if (!chartContainer) {
+                    chartContainer = document.createElement('div');
+                    chartContainer.className = 'chart-container final';
+                    chartContainer.innerHTML = '<canvas id="accuracyChart"></canvas>';
+                    // Find the clip-legend element
+                    const clipLegend = document.querySelector('.clip-legend');
+                    if (clipLegend) {
+                        clipLegend.parentNode.insertBefore(chartContainer, clipLegend.nextSibling);
+                    } else {
+                        this.videoContainer.parentNode.insertBefore(chartContainer, this.videoContainer.nextSibling);
+                    }
+                    
+                    // Reinitialize the chart
+                    const ctx = document.getElementById('accuracyChart').getContext('2d');
+                    window.accuracyChart = createAccuracyChart(ctx);
+                }
+
                 // Send the average accuracy to the server
                 fetch('/save_score', {
                     method: 'POST',
@@ -88,7 +107,7 @@ class VideoController {
                     },
                     body: JSON.stringify({
                         score: averageAccuracy,
-                        video_index: window.location.search.split('=')[1] || '0'  // Get video index from URL
+                        video_index: window.location.search.split('=')[1] || '0'
                     })
                 })
                 .then(response => response.json())
@@ -97,24 +116,14 @@ class VideoController {
                     // Update chart with the saved score and show current score in title
                     accuracyChart.options.plugins.title.text = `Your Score: ${averageAccuracy.toFixed(1)}%`;
                     updateAccuracyChart(averageAccuracy);
-                    const chartContainer = document.querySelector('.chart-container');
-                    if (chartContainer) {
-                        chartContainer.classList.remove('hidden');
-                        // Play finish sound when chart appears
-                        this.finishSound.play();
-                    }
+                    this.finishSound.play();
                 })
                 .catch(error => {
                     console.error('Error saving score:', error);
                     // Still update chart even if save fails
                     accuracyChart.options.plugins.title.text = `Your Score: ${averageAccuracy.toFixed(1)}%`;
                     updateAccuracyChart(averageAccuracy);
-                    const chartContainer = document.querySelector('.chart-container');
-                    if (chartContainer) {
-                        chartContainer.classList.remove('hidden');
-                        // Play finish sound when chart appears
-                        this.finishSound.play();
-                    }
+                    this.finishSound.play();
                 });
             }
 
@@ -185,14 +194,19 @@ window.addEventListener('load', () => {
         const svgElement = document.querySelector('.floating-svg');
         const legendElement = document.querySelector('.clip-legend');
         const chartContainer = document.querySelector('.chart-container');
+        
         if (svgElement) {
             svgElement.style.opacity = '0';
+            svgElement.addEventListener('transitionend', function handler() {
+                svgElement.removeEventListener('transitionend', handler);
+                svgElement.parentElement.remove(); // Remove the entire SVG container
+            });
         }
         if (legendElement) {
             legendElement.style.opacity = '0';
         }
         if (chartContainer) {
-            chartContainer.classList.add('hidden');
+            chartContainer.remove(); // Remove the chart container instead of hiding it
         }
     }
 
@@ -450,3 +464,76 @@ window.addEventListener('load', () => {
 document.addEventListener('DOMContentLoaded', () => {
     new VideoController();
 }); 
+
+function createAccuracyChart(ctx) {
+    // Create gradient for bars
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(74, 158, 255, 0.9)');    // Brighter at top
+    gradient.addColorStop(0.5, 'rgba(74, 158, 255, 0.7)');  // Medium in middle
+    gradient.addColorStop(1, 'rgba(74, 158, 255, 0.5)');    // Darker at bottom
+
+    return new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['0-15%', '16-30%', '31-45%', '46-60%', '61-75%', '76-90%', '91-100%'],
+            datasets: [{
+                label: 'Global Scores',
+                data: Array(7).fill(0),
+                backgroundColor: Array(7).fill(gradient),
+                borderColor: Array(7).fill('rgba(74, 158, 255, 0.9)'),
+                borderWidth: 2,
+                borderRadius: 5,
+                barPercentage: 0.8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: 'Your Score',
+                    color: '#fff',
+                    font: {
+                        family: 'Inter',
+                        size: 16,
+                        weight: 'bold'
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#fff',
+                        font: {
+                            family: 'Inter'
+                        },
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        tickLength: 5,
+                        drawTicks: true,
+                        drawOnChartArea: true,
+                        count: 5
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#fff',
+                        font: {
+                            family: 'Inter'
+                        }
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+} 
