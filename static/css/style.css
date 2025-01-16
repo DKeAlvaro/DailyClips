@@ -809,7 +809,44 @@ body {
 }
 
 .bmc-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(74, 158, 255, 0.2);
+    border-radius: 50px;
+    cursor: pointer;
+    padding: 8px 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Remove default link styles */
+.header-container a {
+    text-decoration: none;
     margin-left: auto; /* Push button to the right */
+}
+
+.bmc-button:hover {
+    transform: translateY(-2px);
+    background: rgba(74, 158, 255, 0.2);
+    box-shadow: 0 8px 25px rgba(74, 158, 255, 0.3);
+    border-color: rgba(74, 158, 255, 0.4);
+}
+
+.bmc-button img {
+    width: 24px;
+    height: auto;
+    filter: invert(1); /* Makes the SVG white */
+}
+
+.bmc-button::after {
+    content: 'Support';
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
 }
 
 /* Mobile styles */
@@ -885,70 +922,4 @@ body {
     background: linear-gradient(45deg, rgba(255, 59, 48, 0.5), rgba(255, 79, 68, 0.5)) !important;
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(255, 59, 48, 0.4);
-}
-
-/* Buy Me a Coffee button styles */
-.bmc-button {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(74, 158, 255, 0.2);
-    border-radius: 50px;
-    cursor: pointer;
-    padding: 8px 20px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(10px);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-left: auto; /* Push button to the right */
-}
-
-.bmc-button:hover {
-    transform: translateY(-2px);
-    background: rgba(74, 158, 255, 0.2);
-    box-shadow: 0 8px 25px rgba(74, 158, 255, 0.3);
-    border-color: rgba(74, 158, 255, 0.4);
-}
-
-.bmc-button img {
-    width: 24px;
-    height: auto;
-    filter: invert(1); /* Makes the SVG white */
-}
-
-.bmc-button::after {
-    content: 'Support';
-    color: white;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-}
-
-/* Header container styles */
-.header-container {
-    display: flex;
-    align-items: center;
-    position: relative;
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.logo {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    margin: 0;
-}
-
-/* Mobile styles */
-@media (max-width: 768px) {
-    .header-container {
-        justify-content: space-between;
-    }
-    
-    .logo {
-        position: static;
-        transform: none;
-    }
 }
