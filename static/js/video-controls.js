@@ -86,13 +86,16 @@ class VideoController {
                     chartContainer = document.createElement('div');
                     chartContainer.className = 'chart-container final';
                     chartContainer.innerHTML = '<canvas id="accuracyChart"></canvas>';
-                    // Find the clip-legend element
-                    const clipLegend = document.querySelector('.clip-legend');
-                    if (clipLegend) {
-                        clipLegend.parentNode.insertBefore(chartContainer, clipLegend.nextSibling);
-                    } else {
-                        this.videoContainer.parentNode.insertBefore(chartContainer, this.videoContainer.nextSibling);
-                    }
+                    
+                    // Create new legend element
+                    const newLegend = document.createElement('div');
+                    newLegend.className = 'clip-legend';
+                    newLegend.textContent = document.querySelector('.clip-legend')?.textContent || '';
+                    
+                    // Insert legend and chart
+                    const mainContent = document.querySelector('.main-content');
+                    mainContent.insertBefore(newLegend, this.videoContainer.nextSibling);
+                    mainContent.insertBefore(chartContainer, newLegend.nextSibling);
                     
                     // Reinitialize the chart
                     const ctx = document.getElementById('accuracyChart').getContext('2d');
@@ -190,23 +193,19 @@ window.addEventListener('load', () => {
         }
         
         this.video.play();
-        // Fade out the SVG, legend and chart
+        // Remove the SVG, legend and chart
         const svgElement = document.querySelector('.floating-svg');
         const legendElement = document.querySelector('.clip-legend');
         const chartContainer = document.querySelector('.chart-container');
         
         if (svgElement) {
-            svgElement.style.opacity = '0';
-            svgElement.addEventListener('transitionend', function handler() {
-                svgElement.removeEventListener('transitionend', handler);
-                svgElement.parentElement.remove(); // Remove the entire SVG container
-            });
+            svgElement.parentElement.remove(); // Remove the entire SVG container
         }
         if (legendElement) {
-            legendElement.style.opacity = '0';
+            legendElement.remove(); // Remove the legend
         }
         if (chartContainer) {
-            chartContainer.remove(); // Remove the chart container instead of hiding it
+            chartContainer.remove(); // Remove the chart container
         }
     }
 

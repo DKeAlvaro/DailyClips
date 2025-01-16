@@ -483,45 +483,11 @@ body {
         margin-bottom: 15px;
     }
 
-    .svg-container {
-        order: -1;
-        margin: -10px auto 20px auto;
-    }
+ 
 
     .clip-legend {
         order: -2;
         margin: 10px auto;
-    }
-}
-
-/* Small mobile devices */
-@media (max-width: 480px) {
-    .results-content {
-        width: 100%;
-        padding: 12px;
-        margin: 5px;
-    }
-
-    .results-header {
-        font-size: 1.1em;
-    }
-
-    .accuracy-display {
-        font-size: 1.8em;
-    }
-
-    .transcript-section {
-        margin: 8px 0;
-        padding: 8px;
-    }
-
-    .transcript-text {
-        font-size: 0.9em;
-    }
-
-    .continue-btn {
-        padding: 8px 20px;
-        font-size: 12px;
     }
 }
 
@@ -532,7 +498,7 @@ body {
     border-radius: 50%;
     border-top-color: rgba(74, 158, 255, 0.8);
     animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    box-shadow: 0 0 15px rgba(74, 158, 255, 0.2);
+    box-shadow: 0 0 15px rgba(74, 158, 255, 0.2);    
 }
 
 @keyframes spin {
@@ -672,7 +638,9 @@ body {
     height: 100px;
 }
 
+
 .floating-svg {
+    margin-top: 20px;
     width: 200px;
     animation: float 3s ease-in-out infinite;
     transition: opacity 0.5s ease;
@@ -699,7 +667,7 @@ body {
     position: relative;
     width: 90%;
     max-width: 700px;
-    margin: 15px auto;
+    margin: 10px auto;
     color: white;
     font-size: 1.1em;
     text-align: center;
@@ -721,7 +689,8 @@ body {
 @media (max-width: 768px) {
     .svg-container {
         height: 80px;
-        margin: 10px auto 20px auto;
+        margin: 0px auto 0px auto;
+        order: -1;
     }
   
     .desktop-controls {
@@ -729,7 +698,6 @@ body {
     }
 
     .mobile-controls {
-        top: -45px;
         display: flex;
         flex-direction: column;
         position: relative;
@@ -775,12 +743,12 @@ body {
     }
 
     .chart-container.final {
-        top: 0;
+        margin-top: 10px;
     }
 
     /* Add padding to main content to prevent overlap */
     .main-content {
-        padding-bottom: 0px;  /* Adjusted to account for mobile controls */
+        padding-bottom: 0px;  
     }
     .results-section {
         width: 90%;
