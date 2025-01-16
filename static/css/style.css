@@ -711,7 +711,6 @@ body {
     .mobile-controls .play-pause-btn,
     .mobile-controls .play-again-btn,
     .mobile-controls .record-btn {
-        margin-top: 15px;
         width: 100%;
         margin-left: 0;
         padding: 12px 20px;
@@ -720,7 +719,12 @@ body {
         justify-content: center;
     }
 
+    .mobile-controls .play-pause-btn{
+        margin-top: 10px;
+    }
+
     .mobile-controls .play-again-btn {
+        margin-top: 10px;
         /* margin-top: -100px; */
         order: 1;
     }

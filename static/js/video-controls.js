@@ -4,12 +4,15 @@ class VideoController {
         this.videoContainer = document.querySelector('.video-container');
         this.playPauseBtn = document.querySelector('.desktop-controls .play-pause-btn');
         this.recordBtn = document.querySelector('.desktop-controls .record-btn');
+        this.replayBtn = document.querySelector('.desktop-controls .play-again-btn');
         this.mobilePlayPauseBtn = document.querySelector('.mobile-controls .play-pause-btn');
         this.mobileRecordBtn = document.querySelector('.mobile-controls .record-btn');
+        this.mobileReplayBtn = document.querySelector('.mobile-controls .play-again-btn');
         this.currentSubtitleIndex = -1;
         this.isRecording = false;
         this.hasStarted = false;
         this.isTransitioning = false;
+        this.isReplaying = false;
         this.asrProcessor = new ASRProcessor();
         // Set up progress callback for continuous updates but don't show them
         this.asrProcessor.setProgressCallback((results) => {
@@ -54,6 +57,10 @@ class VideoController {
         this.playPauseBtn.addEventListener('click', () => this.startVideo());
         // Video playback controls for mobile
         this.mobilePlayPauseBtn.addEventListener('click', () => this.startVideo());
+
+        // Replay controls
+        this.replayBtn.addEventListener('click', () => this.replayCurrentSegment());
+        this.mobileReplayBtn.addEventListener('click', () => this.replayCurrentSegment());
 
         this.video.addEventListener('timeupdate', () => this.checkSubtitles());
         this.video.addEventListener('play', () => {
@@ -316,14 +323,20 @@ window.addEventListener('load', () => {
     checkSubtitles() {
         const currentTime = this.video.currentTime * 1000; // Convert to milliseconds
     
-        // Log current video position
-        // console.log(`Current video position: ${this.formatTime(currentTime)}`);
-    
         for (let i = 0; i < subtitlesData.length; i++) {
             const subtitle = subtitlesData[i];
     
-            // Check if current time is within 1 second after the subtitle's end time
-            if (currentTime >= subtitle.end && currentTime <= subtitle.end + 1000) {
+            // If replaying, stop at the end of the current subtitle
+            if (this.isReplaying && i === this.currentSubtitleIndex) {
+                if (currentTime >= subtitle.end && currentTime <= subtitle.end + 1000) {
+                    this.video.pause();
+                    this.showRecordButton();
+                    this.isReplaying = false;  // Reset the flag
+                    return;
+                }
+            }
+            // Normal behavior for non-replay
+            else if (currentTime >= subtitle.end && currentTime <= subtitle.end + 1000) {
                 if (this.currentSubtitleIndex !== i) {
                     this.currentSubtitleIndex = i;
                     console.log('Matched subtitle:', subtitle);
@@ -343,6 +356,8 @@ window.addEventListener('load', () => {
         this.loadingSpinner.style.display = 'none';
         this.recordBtn.style.display = 'block';
         this.mobileRecordBtn.style.display = 'block';
+        this.replayBtn.style.display = 'block';
+        this.mobileReplayBtn.style.display = 'block';
         this.recordBtn.textContent = 'Record';
         this.mobileRecordBtn.textContent = 'Record';
         this.recordBtn.classList.remove('recording');
@@ -354,6 +369,8 @@ window.addEventListener('load', () => {
     showPlayButton() {
         this.recordBtn.style.display = 'none';
         this.mobileRecordBtn.style.display = 'none';
+        this.replayBtn.style.display = 'none';
+        this.mobileReplayBtn.style.display = 'none';
         this.loadingSpinner.style.display = 'none';
         this.mobileLoadingSpinner.style.display = 'none';
         this.playPauseBtn.style.display = 'block';
@@ -366,6 +383,8 @@ window.addEventListener('load', () => {
     showLoadingSpinner() {
         this.recordBtn.style.display = 'none';
         this.mobileRecordBtn.style.display = 'none';
+        this.replayBtn.style.display = 'none';
+        this.mobileReplayBtn.style.display = 'none';
         this.playPauseBtn.style.display = 'none';
         this.mobilePlayPauseBtn.style.display = 'none';
         
@@ -490,6 +509,22 @@ window.addEventListener('load', () => {
             if (this.isTransitioning) return;
             this.videoContainer.style.transition = 'transform 0.3s ease';
         });
+    }
+
+    replayCurrentSegment() {
+        if (this.currentSubtitleIndex >= 0 && this.currentSubtitleIndex < subtitlesData.length) {
+            const currentSubtitle = subtitlesData[this.currentSubtitleIndex];
+            // Hide record and replay buttons
+            this.recordBtn.style.display = 'none';
+            this.mobileRecordBtn.style.display = 'none';
+            this.replayBtn.style.display = 'none';
+            this.mobileReplayBtn.style.display = 'none';
+            // Set replaying flag
+            this.isReplaying = true;
+            // Convert start time from milliseconds to seconds
+            this.video.currentTime = currentSubtitle.start / 1000;
+            this.video.play();
+        }
     }
 }
 
