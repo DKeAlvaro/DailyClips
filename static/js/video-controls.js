@@ -11,7 +11,14 @@ class VideoController {
         this.hasStarted = false;
         this.isTransitioning = false;
         this.asrProcessor = new ASRProcessor();
+        // Set up progress callback for continuous updates but don't show them
+        this.asrProcessor.setProgressCallback((results) => {
+            // Just store the latest results but don't display them
+            this.latestResults = results;
+        });
+        
         this.accuracies = [];  // Store accuracies for current session
+        this.latestResults = null;  // Store latest results without showing them
 
         // Create loading spinner
         this.loadingSpinner = document.createElement('div');
@@ -210,16 +217,15 @@ window.addEventListener('load', () => {
             this.recordBtn.classList.add('recording');
             this.mobileRecordBtn.classList.add('recording');
 
-            // Process the current subtitle text with Web Speech API
             try {
                 const results = await this.asrProcessor.processAudio(
-                    null, // We don't need the blob anymore
+                    null,
                     subtitlesData[this.currentSubtitleIndex].text
                 );
                 
                 if (results.success) {
-                    console.log('ASR Results:', results);
-                    this.showResults(results.results);
+                    console.log('Final ASR Results:', results);
+                    this.showResults(results.results, false); // false indicates this is the final result
                 } else {
                     console.error('Error in results:', results.error);
                     this.showRecordButton(); // Allow retry
@@ -227,7 +233,6 @@ window.addEventListener('load', () => {
             } catch (error) {
                 console.error('Speech recognition error:', error);
                 this.showRecordButton(); // Allow retry
-                // Show error message to user
                 this.recordBtn.textContent = 'Try Again';
                 this.mobileRecordBtn.textContent = 'Try Again';
             }
@@ -332,8 +337,11 @@ window.addEventListener('load', () => {
         this.mobileLoadingSpinner.style.display = 'block';
     }
 
-    showResults(results) {
-        // Play appropriate sound based on score
+    showResults(results, isProgress = false) {
+        // Skip showing results if this is a progress update
+        if (isProgress) return;
+
+        // Only play sounds and store accuracy for final results
         const score = results.pronunciation_accuracy;
         if (score <= 30) {
             this.wrongSound.play();
@@ -348,7 +356,7 @@ window.addEventListener('load', () => {
         // Store the accuracy for later averaging
         this.accuracies.push(score);
 
-        // Create results section if it doesn't exist
+        // Create or update results section
         let resultsSection = document.querySelector('.results-section');
         if (!resultsSection) {
             resultsSection = document.createElement('div');
@@ -394,11 +402,7 @@ window.addEventListener('load', () => {
         });
 
         content += `</div>`;
-
-        // Update the results section
         resultsSection.innerHTML = content;
-
-        // Show play button
         this.showPlayButton();
     }
 
