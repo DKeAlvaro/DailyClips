@@ -162,10 +162,17 @@ class ASRProcessor {
 
             wordPairs[expectedIndex] = [expectedWord, bestMatch];
             
-            // Update category and score
+            // Update category and score based on similarity percentage
             if (bestMatch !== '-') {
-                categories[expectedIndex] = 1; // Near match
-                correctWords += 0.5; // Half point for near matches
+                const maxLength = Math.max(expectedWord.length, bestMatch.length);
+                const similarityPercentage = ((maxLength - bestDistance) / maxLength) * 100;
+                
+                if (similarityPercentage >= 50) {
+                    categories[expectedIndex] = 1; // Near match
+                    correctWords += 0.5; // Half point for near matches
+                } else {
+                    categories[expectedIndex] = 2; // Not similar enough
+                }
                 usedRecordedIndices.add(bestRecordedIndex);
             }
         }

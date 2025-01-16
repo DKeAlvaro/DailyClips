@@ -97,9 +97,9 @@ class VideoController {
                     mainContent.insertBefore(newLegend, this.videoContainer.nextSibling);
                     mainContent.insertBefore(chartContainer, newLegend.nextSibling);
                     
-                    // Reinitialize the chart
+                    // Reinitialize the chart with the final score
                     const ctx = document.getElementById('accuracyChart').getContext('2d');
-                    window.accuracyChart = createAccuracyChart(ctx);
+                    window.accuracyChart = createAccuracyChart(ctx, averageAccuracy);
                 }
 
                 // Send the average accuracy to the server
@@ -116,6 +116,7 @@ class VideoController {
                 .then(response => response.json())
                 .then(data => {
                     console.log('Score saved:', data);
+                    console.log('Final Average Score:', averageAccuracy.toFixed(1) + '%');
                     // Update chart with the saved score and show current score in title
                     accuracyChart.options.plugins.title.text = `Your Score: ${averageAccuracy.toFixed(1)}%`;
                     updateAccuracyChart(averageAccuracy);
@@ -368,6 +369,10 @@ window.addEventListener('load', () => {
 
         // Store the accuracy for later averaging
         this.accuracies.push(score);
+        
+        // Calculate and log the current average
+        const currentAverage = this.accuracies.reduce((a, b) => a + b, 0) / this.accuracies.length;
+        console.log('Current Average Score:', currentAverage.toFixed(1) + '%');
 
         // Create or update results section
         let resultsSection = document.querySelector('.results-section');
@@ -464,14 +469,15 @@ document.addEventListener('DOMContentLoaded', () => {
     new VideoController();
 }); 
 
-function createAccuracyChart(ctx) {
+function createAccuracyChart(ctx, finalScore) {
     // Create gradient for bars
     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
     gradient.addColorStop(0, 'rgba(74, 158, 255, 0.9)');    // Brighter at top
     gradient.addColorStop(0.5, 'rgba(74, 158, 255, 0.7)');  // Medium in middle
     gradient.addColorStop(1, 'rgba(74, 158, 255, 0.5)');    // Darker at bottom
 
-    return new Chart(ctx, {
+    // Initialize with empty data
+    const chart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: ['0-15%', '16-30%', '31-45%', '46-60%', '61-75%', '76-90%', '91-100%'],
@@ -494,12 +500,21 @@ function createAccuracyChart(ctx) {
                 },
                 title: {
                     display: true,
-                    text: 'Your Score',
+                    text: finalScore ? `Your Score: ${Math.round(finalScore)}%` : 'Your Score',
                     color: '#fff',
                     font: {
                         family: 'Inter',
                         size: 16,
                         weight: 'bold'
+                    }
+                },
+                subtitle: {
+                    display: true,
+                    text: 'Global Average: Loading...',
+                    color: '#fff',
+                    font: {
+                        family: 'Inter',
+                        size: 14
                     }
                 }
             },
@@ -535,4 +550,38 @@ function createAccuracyChart(ctx) {
             }
         }
     });
+
+    // Fetch and update global scores
+    const videoIndex = window.location.search.split('=')[1] || '0';
+    fetch(`/get_global_scores/${videoIndex}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const scoreDistribution = Array(7).fill(0);
+                let totalScore = 0;
+                
+                if (data.scores.length > 0) {
+                    data.scores.forEach(score => {
+                        const binIndex = Math.min(Math.floor(score / 15), 6);
+                        scoreDistribution[binIndex]++;
+                        totalScore += score;
+                    });
+                    
+                    const averageScore = totalScore / data.scores.length;
+                    chart.options.plugins.subtitle.text = `Global Score: ${Math.round(averageScore)}% -- ${data.scores.length} attempts`;
+                } else {
+                    chart.options.plugins.subtitle.text = 'No scores yet';
+                }
+                
+                chart.data.datasets[0].data = scoreDistribution;
+                chart.update();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching global scores:', error);
+            chart.options.plugins.subtitle.text = 'Error loading scores';
+            chart.update();
+        });
+
+    return chart;
 } 
