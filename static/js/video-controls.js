@@ -117,16 +117,20 @@ class VideoController {
                 .then(data => {
                     console.log('Score saved:', data);
                     console.log('Final Average Score:', averageAccuracy.toFixed(1) + '%');
-                    // Update chart with the saved score and show current score in title
-                    accuracyChart.options.plugins.title.text = `Your Score: ${averageAccuracy.toFixed(1)}%`;
-                    updateAccuracyChart(averageAccuracy);
+                    // Update chart title with the final score
+                    if (window.accuracyChart) {
+                        window.accuracyChart.options.plugins.title.text = `Your Score: ${averageAccuracy.toFixed(1)}%`;
+                        window.accuracyChart.update();
+                    }
                     this.finishSound.play();
                 })
                 .catch(error => {
                     console.error('Error saving score:', error);
-                    // Still update chart even if save fails
-                    accuracyChart.options.plugins.title.text = `Your Score: ${averageAccuracy.toFixed(1)}%`;
-                    updateAccuracyChart(averageAccuracy);
+                    // Still update chart title even if save fails
+                    if (window.accuracyChart) {
+                        window.accuracyChart.options.plugins.title.text = `Your Score: ${averageAccuracy.toFixed(1)}%`;
+                        window.accuracyChart.update();
+                    }
                     this.finishSound.play();
                 });
             }

@@ -224,15 +224,6 @@
                     accuracyChart.update();
                 });
         }
-
-        // Function to update chart with new score
-        function updateAccuracyChart(newScore) {
-            const binIndex = Math.min(Math.floor(newScore / 15), 6);
-            accuracyChart.data.datasets[0].data[binIndex]++;
-            accuracyChart.update();
-            // Update global scores to show latest data
-            updateGlobalScores();
-        }
     </script>
     <script src="{{ url_for('static', filename='js/asr-client.js') }}"></script>
     <script src="{{ url_for('static', filename='js/video-controls.js') }}"></script>
