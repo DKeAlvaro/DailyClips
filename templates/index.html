@@ -18,21 +18,26 @@
     <div class="page-container">
 
         <main class="main-content">
-            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 400 120" class="active logo" id="animated-svg">
-                <style>
-                    .svg-elem-1 {
-                        stroke-dashoffset: 541.9140625px;
-                        stroke-dasharray: 541.9140625px;
-                        -webkit-transition: stroke-dashoffset 1s cubic-bezier(0.47, 0, 0.745, 0.715) 0s;
-                                transition: stroke-dashoffset 1s cubic-bezier(0.47, 0, 0.745, 0.715) 0s;
-                    }
-                    svg.active .svg-elem-1 {
-                        stroke-dashoffset: 0;
-                    }
-                </style>
-                <path d="M80 30a20 20 0 0 1 40 0v40a20 20 0 0 1-40 0v-30a10 10 0 0 1 20 0v30a5 5 0 0 0 10 0V30a20 20 0 0 0-40 0v40a30 30 0 0 0 60 0v-30" fill="none" stroke="#007bff" stroke-width="8" class="svg-elem-1"></path>
-                <text x="150" y="75" font-family="Arial, sans-serif" font-size="48" fill="#ffff" font-weight="bold">DailyClips</text>
-            </svg>
+            <div class="header-container">
+                <svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 400 120" class="active logo" id="animated-svg">
+                    <style>
+                        .svg-elem-1 {
+                            stroke-dashoffset: 541.9140625px;
+                            stroke-dasharray: 541.9140625px;
+                            -webkit-transition: stroke-dashoffset 1s cubic-bezier(0.47, 0, 0.745, 0.715) 0s;
+                                    transition: stroke-dashoffset 1s cubic-bezier(0.47, 0, 0.745, 0.715) 0s;
+                        }
+                        svg.active .svg-elem-1 {
+                            stroke-dashoffset: 0;
+                        }
+                    </style>
+                    <path d="M80 30a20 20 0 0 1 40 0v40a20 20 0 0 1-40 0v-30a10 10 0 0 1 20 0v30a5 5 0 0 0 10 0V30a20 20 0 0 0-40 0v40a30 30 0 0 0 60 0v-30" fill="none" stroke="#007bff" stroke-width="8" class="svg-elem-1"></path>
+                    <text x="150" y="75" font-family="Arial, sans-serif" font-size="48" fill="#ffff" font-weight="bold">DailyClips</text>
+                </svg>
+                <button class="bmc-button">
+                    <img src="{{ url_for('static', filename='images/buymeacoffee.svg') }}" alt="Buy me a coffee">
+                </button>
+            </div>
             <script>
                 const svg = document.getElementById('animated-svg');
                 svg.addEventListener('click', () => {
@@ -65,6 +70,7 @@
             <div class="clip-legend">
                 {% if video_title %}{{ video_title }}{% endif %}
             </div>
+
             <div class="svg-container">
                 <img src="{{ url_for('static', filename='images/listen-then-repeat.svg') }}" alt="Listen then Repeat" class="floating-svg">
             </div>
