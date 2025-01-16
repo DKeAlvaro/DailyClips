@@ -194,20 +194,28 @@ window.addEventListener('load', () => {
         }
         
         this.video.play();
-        // Remove the SVG, legend and chart
+        // Add fade out animation to elements before removing them
         const svgElement = document.querySelector('.floating-svg');
         const legendElement = document.querySelector('.clip-legend');
         const chartContainer = document.querySelector('.chart-container');
         
-        if (svgElement) {
-            svgElement.parentElement.remove(); // Remove the entire SVG container
-        }
-        if (legendElement) {
-            legendElement.remove(); // Remove the legend
-        }
-        if (chartContainer) {
-            chartContainer.remove(); // Remove the chart container
-        }
+        const elementsToFade = [svgElement, legendElement, chartContainer].filter(el => el);
+        
+        elementsToFade.forEach(element => {
+            element.style.transition = 'opacity 0.1s';
+            element.style.opacity = '0';
+        });
+
+        // Remove elements after fade out animation
+        setTimeout(() => {
+            elementsToFade.forEach(element => {
+                if (element === svgElement) {
+                    element.parentElement.remove(); // Remove the entire SVG container
+                } else {
+                    element.remove();
+                }
+            });
+        }, 100);
     }
 
     updateNavigationVisibility() {
