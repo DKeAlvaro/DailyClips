@@ -94,7 +94,7 @@ def video_player():
     
     # Find the video title for the current video filename
     print("DEBUG: Current video filename:", video_filename)
-    video_title = video_filename.split('_')[1]
+    video_title = video_filename.split('_')[1].replace('.mp4', '').replace('.webm', '')
     # Get corresponding SRT file (assuming same name, different extension)
     print(video_filename)
     srt_filename = os.path.splitext(video_filename)[0] + '.srt'
