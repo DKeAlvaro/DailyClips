@@ -89,29 +89,18 @@ def video_player():
     current_index = max(0, min(current_index, len(videos) - 1))  # Ensure index is valid
 
     video_filename = videos[current_index]
-    video_path = f'videos/{video_filename}'
-    
+    video_path = f'videos/{video_filename}'    
     # Load video titles from videos_data.csv
-    csv_path = os.path.join('static', 'videos', 'video_titles.csv')
-    try:
-        with open(csv_path, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            video_data = list(reader)  # Convert to list of dictionaries
-            print(f"Loaded video data: {video_data}")  # Better debug message
-    except Exception as e:
-        print(f"Error reading CSV file: {e}")
-        video_data = []
     
     # Find the video title for the current video filename
-    video_title = None
-    for entry in video_data:
-        if entry['video_filename'] == video_filename:
-            video_title = entry['video_title']
-            break
-    
+    print("DEBUG: Current video filename:", video_filename)
+    video_title = video_filename.split('_')[1]
     # Get corresponding SRT file (assuming same name, different extension)
+    print(video_filename)
     srt_filename = os.path.splitext(video_filename)[0] + '.srt'
+
     srt_path = os.path.join('static', 'subtitles', srt_filename)
+    print(srt_path)
     
     # Parse subtitles
     subtitles = parse_srt(srt_path)
