@@ -44,6 +44,7 @@ class VideoController {
             sound.volume = 0.5;
         });
 
+        this.recordedSegments = new Set();  // Add this to track recorded segments
         this.initializeControls();
         this.setupVideoNavigation();
         this.setup3DEffect();
@@ -204,6 +205,7 @@ window.addEventListener('load', () => {
             this.hasStarted = false;
             this.isRecording = false;
             this.accuracies = [];  // Reset accuracies array
+            this.recordedSegments.clear();  // Clear recorded segments
             
             // Remove results section if it exists
             const resultsSection = document.querySelector('.results-section');
@@ -328,16 +330,18 @@ window.addEventListener('load', () => {
     
             // If replaying, stop at the end of the current subtitle
             if (this.isReplaying && i === this.currentSubtitleIndex) {
+                console.log('Replay check - Current time:', currentTime, 'Subtitle end:', subtitle.end);
                 if (currentTime >= subtitle.end && currentTime <= subtitle.end + 1000) {
+                    console.log('Stopping replay at:', currentTime);
                     this.video.pause();
                     this.showRecordButton();
                     this.isReplaying = false;  // Reset the flag
                     return;
                 }
             }
-            // Normal behavior for non-replay
+            // Only pause for unrecorded segments
             else if (currentTime >= subtitle.end && currentTime <= subtitle.end + 1000) {
-                if (this.currentSubtitleIndex !== i) {
+                if (this.currentSubtitleIndex !== i && !this.recordedSegments.has(i)) {
                     this.currentSubtitleIndex = i;
                     console.log('Matched subtitle:', subtitle);
                     console.log(`Pausing at subtitle ${i + 1}: "${subtitle.text}"`);
@@ -470,6 +474,12 @@ window.addEventListener('load', () => {
         content += `</div>`;
         resultsSection.innerHTML = content;
         this.showPlayButton();
+
+        // After successful recording, add the current subtitle index to recorded segments
+        if (!isProgress) {
+            this.recordedSegments.add(this.currentSubtitleIndex);
+            console.log('Recorded segments:', Array.from(this.recordedSegments));
+        }
     }
 
     setup3DEffect() {
@@ -514,15 +524,26 @@ window.addEventListener('load', () => {
     replayCurrentSegment() {
         if (this.currentSubtitleIndex >= 0 && this.currentSubtitleIndex < subtitlesData.length) {
             const currentSubtitle = subtitlesData[this.currentSubtitleIndex];
+            console.log('Replaying segment:', {
+                index: this.currentSubtitleIndex,
+                text: currentSubtitle.text,
+                startTime: currentSubtitle.start,
+                endTime: currentSubtitle.end
+            });
+
             // Hide record and replay buttons
             this.recordBtn.style.display = 'none';
             this.mobileRecordBtn.style.display = 'none';
             this.replayBtn.style.display = 'none';
             this.mobileReplayBtn.style.display = 'none';
+            
             // Set replaying flag
             this.isReplaying = true;
+            
             // Convert start time from milliseconds to seconds
-            this.video.currentTime = currentSubtitle.start / 1000;
+            const newTime = currentSubtitle.start / 1000;
+            console.log('Setting video time to:', newTime, 'seconds');
+            this.video.currentTime = newTime;
             this.video.play();
         }
     }
