@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 import sys
 from sqlalchemy import inspect
 from html import unescape
+from clip_cafe import update_videos
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///scores.db'
@@ -30,6 +31,17 @@ def init_db():
 
 # Replace the current db.create_all() with init_db() call
 init_db()
+
+if os.path.exists('static/videos'):
+    # Clear existing files
+    for file in os.listdir('static/videos'):
+        os.remove(os.path.join('static/videos', file))
+    for file in os.listdir('static/subtitles'):
+        os.remove(os.path.join('static/subtitles', file))
+
+# Download fresh videos
+update_videos(n=3)
+
 
 # Store scores in memory (you might want to use a database in production)
 scores = {}
@@ -75,6 +87,7 @@ def parse_srt(srt_path):
                     'text': text
                 })
     return subtitles
+
 
 @app.route('/')
 def video_player():
