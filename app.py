@@ -6,6 +6,7 @@ import csv
 from flask_sqlalchemy import SQLAlchemy
 import sys
 from sqlalchemy import inspect
+from html import unescape
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///scores.db'
@@ -90,13 +91,14 @@ def video_player():
 
     video_filename = videos[current_index]
     video_path = f'videos/{video_filename}'    
-    # Load video titles from videos_data.csv
     
-    # Find the video title for the current video filename
-    print("DEBUG: Current video filename:", video_filename)
-    video_title = video_filename.split('_')[1].replace('.mp4', '').replace('.webm', '')
-    # Get corresponding SRT file (assuming same name, different extension)
-    print(video_filename)
+    # Parse video title from filename (format: YEAR_MOVIE_NAME.mp4)
+    year, *title_parts = video_filename.split('_')
+    video_title = ' '.join(title_parts).replace('.mp4', '').replace('.webm', '')
+    video_title = unescape(video_title)  # Convert HTML entities back to characters
+    video_title = f"{video_title} ({year})"
+    
+    # Get corresponding SRT file
     srt_filename = os.path.splitext(video_filename)[0] + '.srt'
 
     srt_path = os.path.join('static', 'subtitles', srt_filename)
