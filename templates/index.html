@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="description" content="Daily Clips is a free, no ads no registration webapp focused on improving english pronunciation. App shows users 5 different movie clips a day and allows them to repeat what they said. User's pronunciation is scored using a speech to text model.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HRYNBQ3625"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-HRYNBQ3625');
+    </script>
     <title>Daily Clips</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
