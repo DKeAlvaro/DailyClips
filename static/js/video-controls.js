@@ -257,9 +257,19 @@ window.addEventListener('load', () => {
 
     async startRecording() {
         try {
+            // Show preparing state immediately
+            this.recordBtn.textContent = 'Preparing...';
+            this.mobileRecordBtn.textContent = 'Preparing...';
+            this.recordBtn.classList.add('preparing');
+            this.mobileRecordBtn.classList.add('preparing');
+
             // First check if we have microphone access
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             stream.getTracks().forEach(track => track.stop()); // Clean up the test stream
+            
+            // Remove preparing state and show recording state
+            this.recordBtn.classList.remove('preparing');
+            this.mobileRecordBtn.classList.remove('preparing');
             
             this.isRecording = true;
             this.recordBtn.textContent = 'Stop Recording';
@@ -293,6 +303,8 @@ window.addEventListener('load', () => {
             this.showRecordButton();
             this.recordBtn.textContent = 'Allow Microphone Permission';
             this.mobileRecordBtn.textContent = 'Allow Microphone Permission';
+            this.recordBtn.classList.remove('preparing');
+            this.mobileRecordBtn.classList.remove('preparing');
             this.recordBtn.classList.remove('recording');
             this.mobileRecordBtn.classList.remove('recording');
         }

@@ -338,6 +338,23 @@ body {
     }
 }
 
+.record-btn.preparing {
+    background: linear-gradient(45deg, rgba(255, 59, 48, 0.2), rgba(255, 79, 68, 0.2));
+    animation: preparingPulse 1s infinite;
+}
+
+@keyframes preparingPulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
 .subtitle-text {
     display: none; /* Hide subtitles box */
 }
