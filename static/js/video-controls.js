@@ -257,9 +257,13 @@ window.addEventListener('load', () => {
 
     async startRecording() {
         try {
-            // Show preparing state immediately
-            this.recordBtn.textContent = 'Preparing...';
-            this.mobileRecordBtn.textContent = 'Preparing...';
+            // Disable the button immediately to prevent multiple clicks
+            this.recordBtn.disabled = true;
+            this.mobileRecordBtn.disabled = true;
+            
+            // Show initial state requesting permission
+            this.recordBtn.textContent = 'Allow Microphone';
+            this.mobileRecordBtn.textContent = 'Allow Microphone';
             this.recordBtn.classList.add('preparing');
             this.mobileRecordBtn.classList.add('preparing');
 
@@ -267,9 +271,18 @@ window.addEventListener('load', () => {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             stream.getTracks().forEach(track => track.stop()); // Clean up the test stream
             
+            // Now show preparing state while ASR initializes
+            this.recordBtn.textContent = 'Preparing...';
+            this.mobileRecordBtn.textContent = 'Preparing...';
+            
+            // Small delay to ensure ASR is ready
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
             // Remove preparing state and show recording state
             this.recordBtn.classList.remove('preparing');
             this.mobileRecordBtn.classList.remove('preparing');
+            this.recordBtn.disabled = false;
+            this.mobileRecordBtn.disabled = false;
             
             this.isRecording = true;
             this.recordBtn.textContent = 'Stop Recording';

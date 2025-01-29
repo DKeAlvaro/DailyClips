@@ -29,18 +29,18 @@ def init_db():
             print(f"Database initialization: {str(e)}")
             pass
 
-# Replace the current db.create_all() with init_db() call
-init_db()
+# # Replace the current db.create_all() with init_db() call
+# init_db()
 
-if os.path.exists('static/videos'):
-    # Clear existing files
-    for file in os.listdir('static/videos'):
-        os.remove(os.path.join('static/videos', file))
-    for file in os.listdir('static/subtitles'):
-        os.remove(os.path.join('static/subtitles', file))
+# if os.path.exists('static/videos'):
+#     # Clear existing files
+#     for file in os.listdir('static/videos'):
+#         os.remove(os.path.join('static/videos', file))
+#     for file in os.listdir('static/subtitles'):
+#         os.remove(os.path.join('static/subtitles', file))
 
-# Download fresh videos
-update_videos(n=3)
+# # Download fresh videos
+# update_videos(n=3)
 
 
 # Store scores in memory (you might want to use a database in production)
