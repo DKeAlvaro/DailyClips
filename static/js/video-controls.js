@@ -14,6 +14,16 @@ class VideoController {
         this.isTransitioning = false;
         this.isReplaying = false;
         this.asrProcessor = new ASRProcessor();
+
+        // Create loading overlay
+        this.micLoadingOverlay = document.createElement('div');
+        this.micLoadingOverlay.className = 'mic-loading-overlay';
+        const loadingText = document.createElement('div');
+        loadingText.textContent = 'Loading microphone';
+        loadingText.style.color = 'white';
+        loadingText.style.fontSize = '18px';
+        this.micLoadingOverlay.appendChild(loadingText);
+        document.body.appendChild(this.micLoadingOverlay);
         // Set up progress callback for continuous updates but don't show them
         this.asrProcessor.setProgressCallback((results) => {
             // Just store the latest results but don't display them
@@ -261,7 +271,8 @@ window.addEventListener('load', () => {
             this.recordBtn.disabled = true;
             this.mobileRecordBtn.disabled = true;
             
-            // Show initial state requesting permission
+            // Show loading overlay and initial state
+            this.micLoadingOverlay.classList.add('active');
             this.recordBtn.textContent = 'Allow Microphone';
             this.mobileRecordBtn.textContent = 'Allow Microphone';
             this.recordBtn.classList.add('preparing');
@@ -275,26 +286,31 @@ window.addEventListener('load', () => {
             this.recordBtn.textContent = 'Preparing...';
             this.mobileRecordBtn.textContent = 'Preparing...';
             
-            // Small delay to ensure ASR is ready
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            // Remove preparing state and show recording state
-            this.recordBtn.classList.remove('preparing');
-            this.mobileRecordBtn.classList.remove('preparing');
-            this.recordBtn.disabled = false;
-            this.mobileRecordBtn.disabled = false;
-            
-            this.isRecording = true;
-            this.recordBtn.textContent = 'Stop Recording';
-            this.mobileRecordBtn.textContent = 'Stop Recording';
-            this.recordBtn.classList.add('recording');
-            this.mobileRecordBtn.classList.add('recording');
-
             try {
-                const results = await this.asrProcessor.processAudio(
+                // Start the ASR processor first
+                const processingPromise = this.asrProcessor.processAudio(
                     null,
                     subtitlesData[this.currentSubtitleIndex].text
                 );
+
+                // Wait a moment to ensure ASR is actually ready
+                await new Promise(resolve => setTimeout(resolve, 1200));
+                
+                // Now that recording has actually started, update the UI
+                this.micLoadingOverlay.classList.remove('active');
+                this.recordBtn.classList.remove('preparing');
+                this.mobileRecordBtn.classList.remove('preparing');
+                this.recordBtn.disabled = false;
+                this.mobileRecordBtn.disabled = false;
+                
+                this.isRecording = true;
+                this.recordBtn.textContent = 'Stop Recording';
+                this.mobileRecordBtn.textContent = 'Stop Recording';
+                this.recordBtn.classList.add('recording');
+                this.mobileRecordBtn.classList.add('recording');
+
+                // Wait for the results
+                const results = await processingPromise;
                 
                 if (results.success) {
                     console.log('Final ASR Results:', results);
@@ -320,6 +336,7 @@ window.addEventListener('load', () => {
             this.mobileRecordBtn.classList.remove('preparing');
             this.recordBtn.classList.remove('recording');
             this.mobileRecordBtn.classList.remove('recording');
+            this.micLoadingOverlay.classList.remove('active');
         }
     }
 
@@ -694,4 +711,4 @@ function createAccuracyChart(ctx, finalScore) {
         });
 
     return chart;
-} 
+}

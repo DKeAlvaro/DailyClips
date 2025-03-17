@@ -30,17 +30,17 @@ def init_db():
             pass
 
 # Replace the current db.create_all() with init_db() call
-init_db()
+# init_db()
 
-if os.path.exists('static/videos'):
-    # Clear existing files
-    for file in os.listdir('static/videos'):
-        os.remove(os.path.join('static/videos', file))
-    for file in os.listdir('static/subtitles'):
-        os.remove(os.path.join('static/subtitles', file))
+# if os.path.exists('static/videos'):
+#     # Clear existing files
+#     for file in os.listdir('static/videos'):
+#         os.remove(os.path.join('static/videos', file))
+#     for file in os.listdir('static/subtitles'):
+#         os.remove(os.path.join('static/subtitles', file))
 
 # Download fresh videos
-update_videos(n=3)
+# update_videos(n=3)
 
 
 # Store scores in memory (you might want to use a database in production)
@@ -165,7 +165,8 @@ def get_global_scores(video_index):
     })
 
 if __name__ == '__main__':
+    ssl_context = ('certs/cert.pem', 'certs/key.pem')
     if len(sys.argv) > 1 and sys.argv[1] == 'p':
-        app.run(host='0.0.0.0', port=5000, debug=False)
+        app.run(host='0.0.0.0', port=5000, debug=False, ssl_context=ssl_context)
     else:
-        app.run(debug=True) 
+        app.run(debug=True, ssl_context=ssl_context)
