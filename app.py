@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 import sys
 from sqlalchemy import inspect
 from html import unescape
-from clip_cafe import update_videos
+from get_clips import download_videos
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///scores.db'
@@ -30,7 +30,7 @@ def init_db():
             pass
 
 # Replace the current db.create_all() with init_db() call
-# init_db()
+init_db()
 
 # if os.path.exists('static/videos'):
 #     # Clear existing files
@@ -39,8 +39,8 @@ def init_db():
 #     for file in os.listdir('static/subtitles'):
 #         os.remove(os.path.join('static/subtitles', file))
 
-# Download fresh videos
-# update_videos(n=3)
+# # Download fresh videos
+# download_videos(n=3)
 
 
 # Store scores in memory (you might want to use a database in production)
@@ -105,11 +105,7 @@ def video_player():
     video_filename = videos[current_index]
     video_path = f'videos/{video_filename}'    
     
-    # Parse video title from filename (format: YEAR_MOVIE_NAME.mp4)
-    year, *title_parts = video_filename.split('_')
-    video_title = ' '.join(title_parts).replace('.mp4', '').replace('.webm', '')
-    video_title = unescape(video_title)  # Convert HTML entities back to characters
-    video_title = f"{video_title} ({year})"
+    # Video title is no longer needed
     
     # Get corresponding SRT file
     srt_filename = os.path.splitext(video_filename)[0] + '.srt'
@@ -129,8 +125,7 @@ def video_player():
                          subtitles=subtitles,
                          current_index=current_index,
                          total_videos=len(videos),
-                         saved_scores=scores_list,
-                         video_title=video_title)
+                         saved_scores=scores_list)
 
 @app.route('/save_score', methods=['POST'])
 def save_score():
@@ -167,6 +162,6 @@ def get_global_scores(video_index):
 if __name__ == '__main__':
     ssl_context = ('certs/cert.pem', 'certs/key.pem')
     if len(sys.argv) > 1 and sys.argv[1] == 'p':
-        app.run(host='0.0.0.0', port=5000, debug=False, ssl_context=ssl_context)
+        app.run(host='0.0.0.0', port=5000, debug=False)
     else:
-        app.run(debug=True, ssl_context=ssl_context)
+        app.run(debug=True)

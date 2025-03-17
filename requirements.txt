@@ -6,3 +6,6 @@ requests
 python-dotenv
 heroku3
 flask-talisman
+openai-whisper
+moviepy
+yt-dlp
