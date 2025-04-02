@@ -14,7 +14,7 @@ class ASRProcessor {
         const srtPath = videoPath.replace('.mp4', '.srt').replace('videos', 'subtitles');
         console.log('Loading subtitles from:', srtPath);
         try {
-            const response = await fetch(`/static/${srtPath}`);
+            const response = await fetch(`./static/${srtPath}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
