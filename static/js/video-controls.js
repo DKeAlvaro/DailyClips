@@ -14,6 +14,22 @@ class VideoController {
         this.isTransitioning = false;
         this.isReplaying = false;
         this.asrProcessor = new ASRProcessor();
+        
+        // Load subtitles for current video
+        let videoPath = '';
+        if (this.video.src) {
+            videoPath = this.video.src.replace(window.location.origin + '/static/', '');
+        } else {
+            // Fallback to first video from the list if src is empty
+            videoPath = 'videos/' + videoFiles[0].split('/').pop();
+            this.video.src = window.location.origin + '/static/' + videoPath;
+        }
+        this.asrProcessor.loadSubtitles(videoPath).then(subtitles => {
+            window.subtitlesData = subtitles;
+            console.log('Subtitles loaded:', subtitles);
+        }).catch(error => {
+            console.error('Error loading subtitles:', error);
+        });
 
         // Create loading overlay
         this.micLoadingOverlay = document.createElement('div');
@@ -70,8 +86,14 @@ class VideoController {
         this.mobilePlayPauseBtn.addEventListener('click', () => this.startVideo());
 
         // Replay controls
-        this.replayBtn.addEventListener('click', () => this.replayCurrentSegment());
-        this.mobileReplayBtn.addEventListener('click', () => this.replayCurrentSegment());
+        this.replayBtn.addEventListener('click', () => {
+            console.log('Replay button clicked');
+            this.replayCurrentSegment();
+        });
+        this.mobileReplayBtn.addEventListener('click', () => {
+            console.log('Mobile replay button clicked');
+            this.replayCurrentSegment();
+        });
 
         this.video.addEventListener('timeupdate', () => this.checkSubtitles());
         this.video.addEventListener('play', () => {
@@ -79,6 +101,10 @@ class VideoController {
             this.playPauseBtn.style.display = 'none';
             this.mobilePlayPauseBtn.style.display = 'none';
             document.querySelector('.video-container').classList.add('video-playing');
+            const resultsSection = document.querySelector('.results-section');
+            if (resultsSection) {
+                resultsSection.style.display = 'none';
+            }
             this.updateNavigationVisibility();
         });
         this.video.addEventListener('ended', () => {
@@ -87,12 +113,6 @@ class VideoController {
             this.mobilePlayPauseBtn.style.display = 'block';
             this.playPauseBtn.textContent = 'Play Again';
             this.mobilePlayPauseBtn.textContent = 'Play Again';
-            
-            // Hide the last results section
-            const resultsSection = document.querySelector('.results-section');
-            if (resultsSection) {
-                resultsSection.remove();
-            }
             
             // Calculate and show average accuracy when video ends
             if (this.accuracies.length > 0) {
@@ -114,52 +134,26 @@ class VideoController {
                     console.log('Score saved:', data);
                     console.log('Final Average Score:', averageAccuracy.toFixed(1) + '%');
                     
-                    // Create new chart container if it doesn't exist
-                    let chartContainer = document.querySelector('.chart-container');
-                    if (!chartContainer) {
-                        chartContainer = document.createElement('div');
-                        chartContainer.className = 'chart-container final';
-                        chartContainer.innerHTML = '<canvas id="accuracyChart"></canvas>';
-                        
-                        // Create new legend element
-                        const newLegend = document.createElement('div');
-                        newLegend.className = 'clip-legend';
-                        newLegend.textContent = document.querySelector('.clip-legend')?.textContent || '';
-                        
-                        // Insert legend and chart
-                        const mainContent = document.querySelector('.main-content');
-                        mainContent.insertBefore(newLegend, this.videoContainer.nextSibling);
-                        mainContent.insertBefore(chartContainer, newLegend.nextSibling);
-                        
-                        // Initialize the chart with the final score after getting updated global scores
-                        const ctx = document.getElementById('accuracyChart').getContext('2d');
-                        window.accuracyChart = createAccuracyChart(ctx, averageAccuracy);
-                    }
+                    // Create new legend element
+                    const newLegend = document.createElement('div');
+                    newLegend.className = 'clip-legend';
+                    newLegend.textContent = document.querySelector('.clip-legend')?.textContent || '';
+                    
+                    // Insert legend
+                    const mainContent = document.querySelector('.main-content');
+                    mainContent.insertBefore(newLegend, this.videoContainer.nextSibling);
                     this.finishSound.play();
                 })
                 .catch(error => {
                     console.error('Error saving score:', error);
-                    // Create chart even if save fails
-                    let chartContainer = document.querySelector('.chart-container');
-                    if (!chartContainer) {
-                        chartContainer = document.createElement('div');
-                        chartContainer.className = 'chart-container final';
-                        chartContainer.innerHTML = '<canvas id="accuracyChart"></canvas>';
-                        
-                        // Create new legend element
-                        const newLegend = document.createElement('div');
-                        newLegend.className = 'clip-legend';
-                        newLegend.textContent = document.querySelector('.clip-legend')?.textContent || '';
-                        
-                        // Insert legend and chart
-                        const mainContent = document.querySelector('.main-content');
-                        mainContent.insertBefore(newLegend, this.videoContainer.nextSibling);
-                        mainContent.insertBefore(chartContainer, newLegend.nextSibling);
-                        
-                        // Initialize the chart with the final score
-                        const ctx = document.getElementById('accuracyChart').getContext('2d');
-                        window.accuracyChart = createAccuracyChart(ctx, averageAccuracy);
-                    }
+                    // Create new legend element
+                    const newLegend = document.createElement('div');
+                    newLegend.className = 'clip-legend';
+                    newLegend.textContent = document.querySelector('.clip-legend')?.textContent || '';
+                    
+                    // Insert legend
+                    const mainContent = document.querySelector('.main-content');
+                    mainContent.insertBefore(newLegend, this.videoContainer.nextSibling);
                     this.finishSound.play();
                 });
             }
@@ -288,9 +282,13 @@ window.addEventListener('load', () => {
             
             try {
                 // Start the ASR processor first
+                const subtitleText = (window.subtitlesData || subtitlesData) && (window.subtitlesData || subtitlesData)[this.currentSubtitleIndex] ? 
+                    (window.subtitlesData || subtitlesData)[this.currentSubtitleIndex].text : '';
+
+                console.log('Starting ASR with subtitle:', subtitleText);
                 const processingPromise = this.asrProcessor.processAudio(
                     null,
-                    subtitlesData[this.currentSubtitleIndex].text
+                    subtitleText
                 );
 
                 // Wait a moment to ensure ASR is actually ready
@@ -365,14 +363,13 @@ window.addEventListener('load', () => {
     }
 
     checkSubtitles() {
-        const currentTime = this.video.currentTime * 1000; // Convert to milliseconds
-    
-        for (let i = 0; i < subtitlesData.length; i++) {
-            const subtitle = subtitlesData[i];
+        const currentTime = this.video.currentTime; // Keep in seconds
+        for (let i = 0; i < window.subtitlesData.length; i++) {
+            const subtitle = window.subtitlesData[i];
     
             // If replaying, stop at the end of the current subtitle
             if (this.isReplaying && i === this.currentSubtitleIndex) {
-                console.log('Replay check - Current time:', currentTime, 'Subtitle end:', subtitle.end);
+                // console.log('Replay check - Current time:', currentTime, 'Subtitle end:', subtitle.end);
                 if (currentTime >= subtitle.end && currentTime <= subtitle.end + 1000) {
                     console.log('Stopping replay at:', currentTime);
                     this.video.pause();
@@ -475,6 +472,7 @@ window.addEventListener('load', () => {
             resultsSection.className = 'results-section';
             this.videoContainer.parentNode.insertBefore(resultsSection, this.videoContainer.nextSibling);
         }
+        resultsSection.style.display = 'block';
 
         // Create the content
         let content = `
@@ -564,8 +562,11 @@ window.addEventListener('load', () => {
     }
 
     replayCurrentSegment() {
-        if (this.currentSubtitleIndex >= 0 && this.currentSubtitleIndex < subtitlesData.length) {
-            const currentSubtitle = subtitlesData[this.currentSubtitleIndex];
+        console.log('currentSubtitleIndex:', this.currentSubtitleIndex);
+        console.log('subtitlesData.length:', window.subtitlesData.length);
+        console.log('subtitlesData:', window.subtitlesData);
+        if (this.currentSubtitleIndex >= 0 && this.currentSubtitleIndex < window.subtitlesData.length) {
+            const currentSubtitle = window.subtitlesData[this.currentSubtitleIndex];
             console.log('Replaying segment:', {
                 index: this.currentSubtitleIndex,
                 text: currentSubtitle.text,
@@ -583,10 +584,27 @@ window.addEventListener('load', () => {
             this.isReplaying = true;
             
             // Convert start time from milliseconds to seconds
-            const newTime = currentSubtitle.start / 1000;
+            const newTime = currentSubtitle.start;
             console.log('Setting video time to:', newTime, 'seconds');
-            this.video.currentTime = newTime;
-            this.video.play();
+            
+            // Ensure video is paused before seeking
+            this.video.pause();
+            
+            // Fade out animation before load
+            this.video.style.transition = 'opacity 0.3s';
+            this.video.style.opacity = '0';
+            
+            // Wait for fade out to complete before load
+            setTimeout(() => {
+                // Set video time to subtitle start time
+                this.video.load(); // Recarga el video
+                
+                this.video.currentTime = newTime;
+                // Start the video with fade in
+                this.video.play();
+                this.video.style.opacity = '1';
+            }, 300);
+            console.log('Current video time:', this.video.currentTime);
         }
     }
 }

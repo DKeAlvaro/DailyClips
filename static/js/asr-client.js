@@ -6,6 +6,82 @@ class ASRProcessor {
         this.recognition = null;
         this.isListening = false;
         this.accumulatedText = '';  // Add accumulated text storage
+        this.subtitles = [];
+    }
+
+    async loadSubtitles(videoPath) {
+        console.log('Loading subtitles for video:', videoPath);
+        const srtPath = videoPath.replace('.mp4', '.srt').replace('videos', 'subtitles');
+        console.log('Loading subtitles from:', srtPath);
+        try {
+            const response = await fetch(`/static/${srtPath}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const srtContent = await response.text();
+            console.log('Fetched SRT content:', srtContent.substring(0, 300) + '...');
+            this.subtitles = this.parseSRT(srtContent);
+            console.log('Parsed subtitles:', this.subtitles);
+            return this.subtitles;
+        } catch (error) {
+            console.error('Error loading subtitles:', error);
+            return [];
+        }
+    }
+
+    parseSRT(data) {
+        const subtitles = [];
+        const lines = data.split('\n');
+        let currentSub = null;
+        let state = 'id'; // Possible states: 'id', 'times', 'text'
+        
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) {
+                if (currentSub) {
+                    subtitles.push(currentSub);
+                    currentSub = null;
+                    state = 'id';
+                }
+                continue;
+            }
+            
+            if (state === 'id') {
+                currentSub = { id: parseInt(trimmedLine) };
+                state = 'times';
+            } else if (state === 'times') {
+                const times = trimmedLine.split(' --> ');
+                if (times.length === 2) {
+                    currentSub.start = this.parseTime(times[0].trim());
+                    currentSub.end = this.parseTime(times[1].trim());
+                    state = 'text';
+                }
+            } else if (state === 'text') {
+                if (!currentSub.text) {
+                    currentSub.text = trimmedLine;
+                } else {
+                    currentSub.text += '\n' + trimmedLine;
+                }
+            }
+        }
+        
+        if (currentSub) {
+            subtitles.push(currentSub);
+        }
+        
+        return subtitles;
+    }
+    
+    parseTime(timeStr) {
+        const parts = timeStr.split(':');
+        if (parts.length === 3) {
+            const lastPart = parts[2].split(',');
+            return parseFloat(parts[0]) * 3600 + 
+                   parseFloat(parts[1]) * 60 + 
+                   parseFloat(lastPart[0]) + 
+                   parseFloat(lastPart[1]) / 1000;
+        }
+        return 0;
     }
 
     async processAudio(audioBlob, expectedText) {
@@ -104,6 +180,9 @@ class ASRProcessor {
             .replace(/\s+/g, " ")
             .trim();
 
+        console.log('Comparing recorded text:', recordedText);
+        console.log('With expected text:', expectedText);
+        
         const recordedWords = cleanText(recordedText).split(" ");
         const expectedWords = cleanText(expectedText).split(" ");
 

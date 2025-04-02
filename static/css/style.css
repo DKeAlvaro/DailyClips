@@ -158,16 +158,16 @@ body {
 .video-container {
     position: relative;
     width: 90%;
-    max-width: 700px;
+    max-width: 400px;
     margin: 10px auto;
-    border-radius: 20px;
+    border-radius: 12px;
     overflow: hidden;
     box-shadow: 
         0 20px 40px rgba(0, 0, 0, 0.4),
         0 0 0 1px rgba(74, 158, 255, 0.1),
         0 0 0 3px rgba(74, 158, 255, 0.05);
     background: linear-gradient(45deg, rgba(74, 158, 255, 0.1), rgba(106, 197, 254, 0.1));
-    aspect-ratio: 16/8;
+    aspect-ratio: 9/16;
     transform-style: preserve-3d;
     transform: perspective(1000px);
     transition: transform 0.3s ease;
@@ -232,34 +232,43 @@ body {
 }
 
 .controls {
-    position: absolute;
-    bottom: 15px;
+    position: fixed;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 10;
+    z-index: 1000;
     display: flex;
     gap: 15px;
-    min-width: 120px;
+    width: 90%;
+    max-width: 400px;
     justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 15px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .play-pause-btn, .record-btn {
     position: relative;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
     border: none;
     color: white;
-    padding: 12px 30px;
-    border-radius: 50px;
+    padding: 15px 30px;
+    border-radius: 12px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-width: 130px;
+    min-width: 120px;
+    flex: 1;
     text-align: center;
     backdrop-filter: blur(10px);
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .play-pause-btn::before, .record-btn::before {
@@ -426,13 +435,13 @@ body {
     }
     
     .video-container {
-        width: 90%;
+        width: 60%;
         height: auto;
-        aspect-ratio: 16 / 9;
+        aspect-ratio: 9 / 16;
+        margin: 0 auto;
     }
 
     .controls {
-        
         position: static;
         transform: none;
         margin: 15px auto;
@@ -470,8 +479,8 @@ body {
     }
 
     .accuracy-display {
-        font-size: 2em;
-        margin: 15px 0;
+        font-size: 1.5em;
+        margin: 10px 0;
     }
 
     .transcript-section {
@@ -541,11 +550,12 @@ body {
 } 
 
 .results-section {
-    position: relative;
-    top: 0px;
+    position: absolute;
+    bottom: 150px;
+    left: 50%;
+    transform: translateX(-50%);
     width: 90%;
     max-width: 700px;
-    margin: 15px auto;
     padding: 25px;
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(74, 158, 255, 0.2);
@@ -557,13 +567,14 @@ body {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    z-index: 15;
 }
 
 .accuracy-value {
-    font-size: 1.8em;
+    font-size: 1.4em;
     font-weight: 700;
     text-align: center;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     background: linear-gradient(45deg, #4a9eff, #6ac5fe);
     -webkit-background-clip: text;
     background-clip: text;
@@ -665,13 +676,6 @@ body {
 
 
 
-.svg-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    height: 100px;
-}
 
 
 .floating-svg {
@@ -736,12 +740,25 @@ body {
     .mobile-controls {
         display: flex;
         flex-direction: column;
-        position: relative;
-        left: 0%;
-        width: 86%;
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
         gap: 10px;
-        align-items: center;  /* Center items */
-        margin-top: 10px;
+        align-items: center;
+        padding: 15px;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        margin-bottom: 10px;
+        z-index: 10;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .mobile-controls.video-playing {
+        opacity: 0;
+        visibility: hidden;
     }
 
     .mobile-controls .play-pause-btn,
@@ -772,33 +789,22 @@ body {
         order: 3;
     }
 
-    .chart-container {
-        top: 0;
-        position: relative;
-        width: 85%;
-        min-height: 150px;
-        padding: 15px;
-        z-index: 1;
-        margin: 10px auto;
-    }
-
-    .chart-container.final {
-        margin-top: 10px;
-    }
+    
 
     /* Add padding to main content to prevent overlap */
     .main-content {
         padding-bottom: 0px;  
     }
     .results-section {
+        bottom: 80px;
         width: 90%;
-        max-width: 700px;
-        margin: 15px auto;
+        max-width: 500px;
+        margin: 60px auto 15px;
         padding: 20px;
     }
 
     .accuracy-value {
-        font-size: 1.5em;
+        font-size: 1.2em;
     }
 
     .transcript-words {
