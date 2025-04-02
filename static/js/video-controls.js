@@ -18,11 +18,11 @@ class VideoController {
         // Load subtitles for current video
         let videoPath = '';
         if (this.video.src) {
-            videoPath = this.video.src.replace(window.location.origin + '/static/', '');
+            videoPath = this.video.src.replace(/^.*static\//, '');
         } else {
             // Fallback to first video from the list if src is empty
             videoPath = 'videos/' + videoFiles[0].split('/').pop();
-            this.video.src = window.location.origin + '/static/' + videoPath;
+            this.video.src = 'static/' + videoPath;
         }
         this.asrProcessor.loadSubtitles(videoPath).then(subtitles => {
             window.subtitlesData = subtitles;
@@ -61,11 +61,11 @@ class VideoController {
         this.videoContainer.appendChild(this.resultsOverlay);
 
         // Create sounds
-        this.wrongSound = new Audio('/static/sound/wrong.mp3');
-        this.coinSound = new Audio('/static/sound/coin.mp3');
-        this.middleSound = new Audio('/static/sound/middle.mp3');
-        this.goodSound = new Audio('/static/sound/good.mp3');
-        this.finishSound = new Audio('/static/sound/finish_sound.wav');
+        this.wrongSound = new Audio('static/sound/wrong.mp3');
+        this.coinSound = new Audio('static/sound/coin.mp3');
+        this.middleSound = new Audio('static/sound/middle.mp3');
+        this.goodSound = new Audio('static/sound/good.mp3');
+        this.finishSound = new Audio('static/sound/finish_sound.wav');
         [this.wrongSound, this.coinSound, this.middleSound, this.goodSound, this.finishSound].forEach(sound => {
             sound.volume = 0.5;
         });
