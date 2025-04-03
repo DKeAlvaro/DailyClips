@@ -177,45 +177,25 @@ class VideoController {
                 if (this.isTransitioning) return;
     
                 const direction = nav.classList.contains('prev') ? -1 : 1;
-                const videoContainer = document.querySelector('.video-container');
-                console.log('Current video index:', currentVideoIndex);
-                let videoPath = 'videos/' + videoFiles[currentVideoIndex].split('/').pop();
-                console.log('Current video path:', videoPath);
+                const newIndex = currentVideoIndex + direction;
+                
+                // Prevent out-of-bounds navigation
+                if (newIndex < 0 || newIndex >= videoFiles.length) return;
+
+                this.isTransitioning = true;
+                
+                // Update video source and subtitles
+                let videoPath = 'videos/' + videoFiles[newIndex].split('/').pop();
+                this.video.src = 'static/' + videoPath;
                 this.asrProcessor.loadSubtitles(videoPath).then(subtitles => {
                     window.subtitlesData = subtitles;
                 }).catch(error => {
                     console.error('Error loading subtitles:', error);
                 });
-        
-                this.video.src ='static/' + videoPath;
-                // Prevent out-of-bounds navigation
-                const newIndex = currentVideoIndex + direction;
-                if (newIndex < 0 || newIndex >= videoFiles.length) {
-                    this.isTransitioning = false;
-                    return;
-                }
-    
-                this.isTransitioning = true;
-    
-                // Add fade-out animation
-                videoContainer.classList.add('video-fade-out');
-    
-                setTimeout(() => {
-                    setVideoSource(newIndex); // Change video based on index
-                    videoContainer.classList.remove('video-fade-out');
-                    videoContainer.classList.add('video-fade-in');
-    
-                    setTimeout(() => {
-                        videoContainer.classList.remove('video-fade-in');
-                        this.isTransitioning = false;
-                    }, 500);
-                }, 500);
+
+                currentVideoIndex = newIndex;
+                this.isTransitioning = false;
             });
-        });
-    
-        // Add fade-in animation on load
-        window.addEventListener('load', () => {
-            document.querySelector('.video-container').classList.add('video-fade-in');
         });
     }
     
