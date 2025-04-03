@@ -24,9 +24,9 @@ class VideoController {
             videoPath = 'videos/' + videoFiles[0].split('/').pop();
             this.video.src = 'static/' + videoPath;
         }
+        console.log('Video pathednieidnednidendio:');
         this.asrProcessor.loadSubtitles(videoPath).then(subtitles => {
             window.subtitlesData = subtitles;
-            console.log('Subtitles loaded:', subtitles);
         }).catch(error => {
             console.error('Error loading subtitles:', error);
         });
@@ -74,9 +74,6 @@ class VideoController {
         this.initializeControls();
         this.setupVideoNavigation();
         this.setup3DEffect();
-
-        // Add this to log subtitles data when controller is initialized
-        console.log('Loaded subtitles:', subtitlesData);
     }
 
     initializeControls() {
@@ -363,6 +360,9 @@ window.addEventListener('load', () => {
     }
 
     checkSubtitles() {
+        // Add check for undefined subtitlesData
+        if (!window.subtitlesData || !window.subtitlesData.length) return;
+        
         const currentTime = this.video.currentTime; // Keep in seconds
         for (let i = 0; i < window.subtitlesData.length; i++) {
             const subtitle = window.subtitlesData[i];

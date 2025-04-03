@@ -12,14 +12,13 @@ class ASRProcessor {
     async loadSubtitles(videoPath) {
         console.log('Loading subtitles for video:', videoPath);
         const srtPath = videoPath.replace('.mp4', '.srt').replace('videos', 'subtitles');
-        console.log('Loading subtitles from:', srtPath);
         try {
             const response = await fetch(`./static/${srtPath}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const srtContent = await response.text();
-            console.log('Fetched SRT content:', srtContent.substring(0, 300) + '...');
+            console.log('Fetched SRT content:', srtContent.substring(0, 100) + '...');
             this.subtitles = this.parseSRT(srtContent);
             console.log('Parsed subtitles:', this.subtitles);
             return this.subtitles;
