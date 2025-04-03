@@ -63,7 +63,7 @@
                     <span class="arrow">→</span>
                 </a>
                 <video id="mainVideo" preload="metadata">
-                    <source src="static/videos/GladiatorRefusedHisFreedomMultipleTimesAnimatedRomanHistoryShorts.mp4" type="video/mp4" id="video-source">
+                    <source src="" type="video/mp4" id="video-source">
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const videoSource = document.getElementById('video-source');
@@ -93,16 +93,30 @@
         </main>
     </div>
     <script>
+        let currentVideoIndex = 0; // Global index for tracking video
         const subtitlesData = [];
         const savedScores = {};
         const videoFiles = [
-    'static/videos/GladiatorRefusedHisFreedomMultipleTimesAnimatedRomanHistoryShorts.mp4',
-    'static/videos/PenelopeAndColinLoveSceneShortsBridgerton.mp4',
-    'static/videos/RhettFlipsEveryoneOff.mp4',
-    'static/videos/dont-want-take-a-leap-of-faith.mp4'
-];
-console.log('Video files:', videoFiles);
+            'static/videos/GladiatorRefusedHisFreedomMultipleTimesAnimatedRomanHistoryShorts.mp4',
+            'static/videos/PenelopeAndColinLoveSceneShortsBridgerton.mp4',
+            'static/videos/RhettFlipsEveryoneOff.mp4',
+            'static/videos/dont-want-take-a-leap-of-faith.mp4'
+        ];
+        
+        function setVideoSource(index) {
+            currentVideoIndex = index;
+            const videoSource = document.getElementById('video-source');
+            videoSource.src = videoFiles[currentVideoIndex];
+            document.getElementById('mainVideo').load(); // Reload the video
+        }
+    
+        // Initialize the first video
+        setVideoSource(currentVideoIndex);
+    
+        console.log('Video files:', videoFiles);
+        console.log('Current video:', videoFiles[currentVideoIndex]);
     </script>
+    
     <script src="static/js/asr-client.js"></script>
     <script src="static/js/video-controls.js"></script>
 </body>

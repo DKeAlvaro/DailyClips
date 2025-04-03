@@ -15,16 +15,13 @@ class VideoController {
         this.isReplaying = false;
         this.asrProcessor = new ASRProcessor();
         
-        // Load subtitles for current video
-        let videoPath = '';
-        if (this.video.src) {
-            videoPath = this.video.src.replace(/^.*static\//, '');
-        } else {
-            // Fallback to first video from the list if src is empty
-            videoPath = 'videos/' + videoFiles[0].split('/').pop();
-            this.video.src = 'static/' + videoPath;
-        }
-        console.log('Video pathednieidnednidendio:');
+    // Load subtitles for current video
+// video controls.js
+        console.log("Current video index:", currentVideoIndex);
+        let videoPath = 'videos/' + videoFiles[currentVideoIndex].split('/').pop();
+        console.log("Current video path:", videoPath);
+        this.video.src = 'static/' + videoPath;
+    
         this.asrProcessor.loadSubtitles(videoPath).then(subtitles => {
             window.subtitlesData = subtitles;
         }).catch(error => {
@@ -174,31 +171,54 @@ class VideoController {
     }
 
     setupVideoNavigation() {
-document.querySelectorAll('.video-nav').forEach(nav => {
-    nav.addEventListener('click', (e) => {
+        document.querySelectorAll('.video-nav').forEach(nav => {
+            nav.addEventListener('click', (e) => {
                 e.preventDefault();
                 if (this.isTransitioning) return;
-
-        const direction = nav.classList.contains('prev') ? 'prev' : 'next';
+    
+                const direction = nav.classList.contains('prev') ? -1 : 1;
                 const videoContainer = document.querySelector('.video-container');
+                console.log('Current video index:', currentVideoIndex);
+                let videoPath = 'videos/' + videoFiles[currentVideoIndex].split('/').pop();
+                console.log('Current video path:', videoPath);
+                this.asrProcessor.loadSubtitles(videoPath).then(subtitles => {
+                    window.subtitlesData = subtitles;
+                }).catch(error => {
+                    console.error('Error loading subtitles:', error);
+                });
+        
+                this.video.src ='static/' + videoPath;
+                // Prevent out-of-bounds navigation
+                const newIndex = currentVideoIndex + direction;
+                if (newIndex < 0 || newIndex >= videoFiles.length) {
+                    this.isTransitioning = false;
+                    return;
+                }
+    
                 this.isTransitioning = true;
-
-                // Add fade out animation
+    
+                // Add fade-out animation
                 videoContainer.classList.add('video-fade-out');
-
+    
                 setTimeout(() => {
-                    window.location.href = nav.href;
+                    setVideoSource(newIndex); // Change video based on index
+                    videoContainer.classList.remove('video-fade-out');
+                    videoContainer.classList.add('video-fade-in');
+    
+                    setTimeout(() => {
+                        videoContainer.classList.remove('video-fade-in');
+                        this.isTransitioning = false;
+                    }, 500);
                 }, 500);
-    });
-});
-
-        // Add fade in animation on load
-window.addEventListener('load', () => {
-            const videoContainer = document.querySelector('.video-container');
-    videoContainer.classList.add('video-fade-in');
-});
+            });
+        });
+    
+        // Add fade-in animation on load
+        window.addEventListener('load', () => {
+            document.querySelector('.video-container').classList.add('video-fade-in');
+        });
     }
-
+    
     startVideo() {
         if (this.video.ended) {
             // Reset the session
