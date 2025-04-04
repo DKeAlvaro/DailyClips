@@ -27,3 +27,4 @@ venv/
 *.sqlite
 *.sqlite
 cookies.txt
+cookies_b64.txt
