@@ -3,6 +3,8 @@ name: Daily Update
 on:
   schedule:
     - cron: '0 0 * * *'  # Runs daily at 00:00 UTC (adjust timezone if needed)
+  workflow_dispatch:      # Allows manual triggering
+
 
 jobs:
   update:
