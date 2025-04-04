@@ -11,8 +11,9 @@ def download_youtube_video():
     os.makedirs(downloads_dir, exist_ok=True)
 
     # Configure yt-dlp for searching
+    cookies_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
     search_opts = {
-        'cookiefile': 'cookies.txt',
+        'cookiefile': cookies_path,
         "quiet": True,
         "no_warnings": True,
         "extract_flat": True,
@@ -63,6 +64,7 @@ def download_youtube_video():
         "clean_infojson": True,
         "quiet": True,
         "no_warnings": True,
+        "cookiefile": cookies_path,
         "paths": {
             "home": downloads_dir
         }
