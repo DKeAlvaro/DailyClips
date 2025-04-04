@@ -25,4 +25,5 @@ venv/
 .vscode/
 *.db
 *.sqlite
-*.sqlite3 
+*.sqlite
+cookies.txt

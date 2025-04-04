@@ -12,6 +12,7 @@ def download_youtube_video():
 
     # Configure yt-dlp for searching
     search_opts = {
+        'cookiefile': 'cookies.txt',
         "quiet": True,
         "no_warnings": True,
         "extract_flat": True,
