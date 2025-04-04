@@ -1,0 +1,4 @@
+moviepy==1.0.3
+openai_whisper==20240930
+whisper==1.1.10
+yt_dlp==2025.3.31
