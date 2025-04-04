@@ -12,7 +12,6 @@ def download_youtube_video():
 
     # Configure yt-dlp for searching
     search_opts = {
-        'cookiefile': 'cookies.txt',
         "quiet": True,
         "no_warnings": True,
         "extract_flat": True,
@@ -57,6 +56,7 @@ def download_youtube_video():
     output_filename = os.path.join(downloads_dir, f"{video_name}.mp4")
 
     ydl_opts = {
+        "cookies": "cookies.txt",
         "format": "bv*+ba/best",
         "outtmpl": output_filename,
         "merge_output_format": "mp4",
