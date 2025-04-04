@@ -1,0 +1,12 @@
+1
+00:00:00,000 --> 00:00:00,940
+It happened.
+
+2
+00:00:01,659 --> 00:00:07,820
+On May 6th, 2002, Elon Musk founded SpaceX with the primary goals of reducing the cost
+
+3
+00:00:07,820 --> 00:00:11,259
+of space transportation and making the colonization of Mars possible.
+
