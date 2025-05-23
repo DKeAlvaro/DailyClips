@@ -73,6 +73,47 @@ class VideoController {
         this.setup3DEffect();
     }
 
+    _resetForNewVideo() {
+        this.video.pause();
+        this.video.currentTime = 0;
+
+        this.hasStarted = false;
+        this.currentSubtitleIndex = -1;
+        this.isReplaying = false;
+        this.accuracies = [];
+        this.recordedSegments.clear();
+
+        const resultsSection = document.querySelector('.results-section');
+        if (resultsSection) {
+            resultsSection.remove();
+        }
+
+        // Reset button visibility and text
+        this.playPauseBtn.style.display = 'block';
+        this.mobilePlayPauseBtn.style.display = 'block';
+        this.playPauseBtn.textContent = 'Play';
+        this.mobilePlayPauseBtn.textContent = 'Play';
+
+        this.recordBtn.style.display = 'none';
+        this.mobileRecordBtn.style.display = 'none';
+        this.recordBtn.classList.remove('recording', 'preparing', 'error');
+        this.mobileRecordBtn.classList.remove('recording', 'preparing', 'error');
+        this.recordBtn.disabled = false;
+        this.mobileRecordBtn.disabled = false;
+
+        this.replayBtn.style.display = 'none';
+        this.mobileReplayBtn.style.display = 'none';
+
+        this.loadingSpinner.style.display = 'none';
+        if (this.mobileLoadingSpinner) {
+            this.mobileLoadingSpinner.style.display = 'none';
+        }
+
+        document.querySelector('.video-container').classList.remove('video-playing');
+        
+        this.updateNavigationVisibility();
+    }
+
     initializeControls() {
         // Video playback controls for desktop
         this.playPauseBtn.addEventListener('click', () => this.startVideo());
@@ -108,11 +149,50 @@ class VideoController {
             this.playPauseBtn.textContent = 'Play Again';
             this.mobilePlayPauseBtn.textContent = 'Play Again';
             
-            // Calculate and show average accuracy when video ends
             if (this.accuracies.length > 0) {
                 const averageAccuracy = this.accuracies.reduce((a, b) => a + b, 0) / this.accuracies.length;
                 
-                // First save the score and get updated global scores
+                const displayFinalScoreAndRelatedUI = () => {
+                    console.log('Final Average Score:', averageAccuracy.toFixed(1) + '%');
+                    
+                    let resultsSection = document.querySelector('.results-section');
+                    if (!resultsSection) {
+                        resultsSection = document.createElement('div');
+                        // resultsSection.className = 'results-section'; // Class will be set below
+                        this.videoContainer.parentNode.insertBefore(resultsSection, this.videoContainer.nextSibling);
+                    }
+                    // Apply specific classes for final score popup
+                    resultsSection.className = 'results-section final-score-popup'; 
+                    resultsSection.innerHTML = `
+                        <div class="accuracy-value">Overall Accuracy: ${averageAccuracy.toFixed(1)}%</div>
+                    `;
+                    resultsSection.style.display = 'flex'; // Use flex to help center content if needed, or block
+
+                    // Hide other controls
+                    this.recordBtn.style.display = 'none';
+                    this.mobileRecordBtn.style.display = 'none';
+                    this.replayBtn.style.display = 'none';
+                    this.mobileReplayBtn.style.display = 'none';
+                    this.loadingSpinner.style.display = 'none';
+                    if (this.mobileLoadingSpinner) {
+                        this.mobileLoadingSpinner.style.display = 'none';
+                    }
+
+                    // The existing logic for chart legend and finish sound
+                    const newLegend = document.createElement('div');
+                    newLegend.className = 'clip-legend';
+                    newLegend.textContent = document.querySelector('.clip-legend')?.textContent || ''; 
+                    
+                    const mainContent = document.querySelector('.main-content');
+                    // Insert chart-related legend if necessary (keeping original logic structure)
+                    // To avoid issues, this should probably be inserted if a chart is actually displayed.
+                    // mainContent.insertBefore(newLegend, this.videoContainer.nextSibling);
+                    // For now, let's not re-insert a generic legend here as it might conflict or be redundant.
+                    // The main .clip-legend's visibility is handled by startVideo and onended opacity logic.
+
+                    this.finishSound.play();
+                };
+
                 fetch('/save_score', {
                     method: 'POST',
                     headers: {
@@ -120,39 +200,21 @@ class VideoController {
                     },
                     body: JSON.stringify({
                         score: averageAccuracy,
-                        video_index: window.location.search.split('=')[1] || '0'
+                        video_index: window.location.search.split('=')[1] || '0' // Ensure currentVideoIndex is used if page URL isn't updated
                     })
                 })
                 .then(response => response.json())
                 .then(data => {
                     console.log('Score saved:', data);
-                    console.log('Final Average Score:', averageAccuracy.toFixed(1) + '%');
-                    
-                    // Create new legend element
-                    const newLegend = document.createElement('div');
-                    newLegend.className = 'clip-legend';
-                    newLegend.textContent = document.querySelector('.clip-legend')?.textContent || '';
-                    
-                    // Insert legend
-                    const mainContent = document.querySelector('.main-content');
-                    mainContent.insertBefore(newLegend, this.videoContainer.nextSibling);
-                    this.finishSound.play();
+                    displayFinalScoreAndRelatedUI();
                 })
                 .catch(error => {
                     console.error('Error saving score:', error);
-                    // Create new legend element
-                    const newLegend = document.createElement('div');
-                    newLegend.className = 'clip-legend';
-                    newLegend.textContent = document.querySelector('.clip-legend')?.textContent || '';
-                    
-                    // Insert legend
-                    const mainContent = document.querySelector('.main-content');
-                    mainContent.insertBefore(newLegend, this.videoContainer.nextSibling);
-                    this.finishSound.play();
+                    displayFinalScoreAndRelatedUI(); // Display final score even if saving fails
                 });
             }
 
-            // Show SVG and legend
+            // Show SVG and legend (original logic, may need review if elements are removed by startVideo)
             const svgElement = document.querySelector('.floating-svg');
             const legendElement = document.querySelector('.clip-legend');
             if (svgElement) {
@@ -177,23 +239,44 @@ class VideoController {
                 if (this.isTransitioning) return;
     
                 const direction = nav.classList.contains('prev') ? -1 : 1;
-                const newIndex = currentVideoIndex + direction;
+                const newVideoGlobalIndex = currentVideoIndex + direction;
                 
-                // Prevent out-of-bounds navigation
-                if (newIndex < 0 || newIndex >= videoFiles.length) return;
+                if (newVideoGlobalIndex < 0 || newVideoGlobalIndex >= videoFiles.length) return;
 
                 this.isTransitioning = true;
                 
-                // Update video source and subtitles
-                let videoPath = 'videos/' + videoFiles[newIndex].split('/').pop();
+                // 1. Reset application state for the new video
+                this._resetForNewVideo(); 
+
+                // 2. Update the global currentVideoIndex
+                currentVideoIndex = newVideoGlobalIndex; 
+
+                // 3. Prepare video source and subtitles path using the NEW currentVideoIndex
+                let videoPath = 'videos/' + videoFiles[currentVideoIndex].split('/').pop();
+                
+                // 4. Set new video source
                 this.video.src = 'static/' + videoPath;
+                
+                // 5. Load subtitles for the new video
                 this.asrProcessor.loadSubtitles(videoPath).then(subtitles => {
                     window.subtitlesData = subtitles;
+                    console.log(`Subtitles loaded for video index ${currentVideoIndex}`);
                 }).catch(error => {
-                    console.error('Error loading subtitles:', error);
+                    console.error('Error loading subtitles during navigation:', error);
+                    window.subtitlesData = []; // Default to empty array on error
                 });
 
-                currentVideoIndex = newIndex;
+                // 6. Explicitly load the new video. This makes the browser process the new source
+                // and reset the video player's internal state (like 'ended' flag).
+                this.video.load(); 
+                
+                // 7. Clear the video title/legend for the new video
+                const videoTitleElement = document.getElementById('video-title');
+                if (videoTitleElement) {
+                    videoTitleElement.textContent = '';
+                }
+                
+                // 8. End transition
                 this.isTransitioning = false;
             });
         });
@@ -469,10 +552,12 @@ class VideoController {
         let resultsSection = document.querySelector('.results-section');
         if (!resultsSection) {
             resultsSection = document.createElement('div');
-            resultsSection.className = 'results-section';
+            // resultsSection.className = 'results-section'; // Class set below
             this.videoContainer.parentNode.insertBefore(resultsSection, this.videoContainer.nextSibling);
         }
-        resultsSection.style.display = 'block';
+        // Ensure it's styled as a regular results section, not a popup
+        resultsSection.className = 'results-section'; 
+        resultsSection.style.display = 'block'; // Reset display style
 
         // Create the content
         let content = `

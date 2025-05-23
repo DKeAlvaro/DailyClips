@@ -1,0 +1,20 @@
+1
+00:00:00,000 --> 00:00:02,879
+Jensen's correct, it could take longer.
+
+2
+00:00:03,299 --> 00:00:06,740
+This is both in terms of how you build a quantum computer
+
+3
+00:00:07,380 --> 00:00:11,099
+and what software you write that can solve problems
+
+4
+00:00:11,099 --> 00:00:12,900
+that other computer couldn't write,
+
+5
+00:00:13,500 --> 00:00:14,800
+there's some hard work to be done.
+
