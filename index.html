@@ -2,123 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="description" content="Daily Clips is a free, no ads no registration webapp focused on improving english pronunciation. App shows users 5 different movie clips a day and allows them to repeat what they said. User's pronunciation is scored using a speech to text model.">
+    <meta name="description" content="Daily Clips - Improve your English pronunciation with daily video clips. Free, no ads, no registration.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HRYNBQ3625"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-HRYNBQ3625');
-    </script>
-    <title>Daily Clips</title>
+    <title>DailyClips - English Pronunciation Practice</title>
     <link rel="icon" type="image/x-icon" href="static/favicon.ico">
     <link rel="stylesheet" href="static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="wave-container">
-        
         <div class="wave"></div>
         <div class="wave"></div>
         <div class="wave"></div>
     </div>
-    <div class="page-container">
 
-        <main class="main-content">
-            <div class="header-container">
-                <svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 400 120" class="active logo" id="animated-svg">
-                    <style>
-                        .svg-elem-1 {
-                            stroke-dashoffset: 541.9140625px;
-                            stroke-dasharray: 541.9140625px;
-                            -webkit-transition: stroke-dashoffset 1s cubic-bezier(0.47, 0, 0.745, 0.715) 0s;
-                                    transition: stroke-dashoffset 1s cubic-bezier(0.47, 0, 0.745, 0.715) 0s;
-                        }
-                        svg.active .svg-elem-1 {
-                            stroke-dashoffset: 0;
-                        }
-                    </style>
-                    <path d="M80 30a20 20 0 0 1 40 0v40a20 20 0 0 1-40 0v-30a10 10 0 0 1 20 0v30a5 5 0 0 0 10 0V30a20 20 0 0 0-40 0v40a30 30 0 0 0 60 0v-30" fill="none" stroke="#007bff" stroke-width="8" class="svg-elem-1"></path>
-                    <text x="150" y="75" font-family="Arial, sans-serif" font-size="48" fill="#ffff" font-weight="bold">DailyClips</text>
-                </svg>
-                <a href="https://buymeacoffee.com/alvarobuildinpublic" target="_blank" rel="noopener noreferrer">
-                    <button class="bmc-button">
-                        <img src="static/images/buymeacoffee.svg" alt="Buy me a coffee">
-                    </button>
-                </a>
-            </div>
-            <script>
-                const svg = document.getElementById('animated-svg');
-                svg.addEventListener('click', () => {
-                    svg.classList.toggle('active');
-                });
-            </script>
-            <div class="video-container">
-                <a href="#" class="video-nav prev" id="prev-video">
-                    <span class="arrow">←</span>
-                </a>
-                <a href="#" class="video-nav next" id="next-video">
-                    <span class="arrow">→</span>
-                </a>
-                <video id="mainVideo" preload="metadata">
-                    <source src="" type="video/mp4" id="video-source">
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const videoSource = document.getElementById('video-source');
-        console.log('Current video source:', videoSource.src);
-    });
-</script>
-                    Your browser does not support the video tag.
-                </video>
-                <div class="controls desktop-controls">
-                    <button class="play-pause-btn">Play</button>
-                    <button class="record-btn" style="display: none;">Record</button>
-                    <button class="play-again-btn" style="display: none;">Replay</button>
-                </div>
-            </div>
-            <div class="clip-legend">
-                <span id="video-title"></span>
-            </div>
-
-            
-            
-            <div class="controls mobile-controls">
-                <button class="play-pause-btn">Play</button>
-                <button class="record-btn" style="display: none;">Record</button>
-                <button class="play-again-btn" style="display: none;">Replay</button>
-            </div>
-            <p id="no-videos-message" style="display:none;">No video files found in the static/videos directory.</p>
+    <div class="landing-page-container">
+        <header class="landing-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 400 120" class="active logo" id="animated-svg-landing">
+                <style>
+                    .svg-elem-1-landing { /* Unique class for landing page SVG animation if needed */
+                        stroke-dashoffset: 541.9140625px;
+                        stroke-dasharray: 541.9140625px;
+                        transition: stroke-dashoffset 1s cubic-bezier(0.47, 0, 0.745, 0.715) 0s;
+                    }
+                    svg.active .svg-elem-1-landing {
+                        stroke-dashoffset: 0;
+                    }
+                </style>
+                <path d="M80 30a20 20 0 0 1 40 0v40a20 20 0 0 1-40 0v-30a10 10 0 0 1 20 0v30a5 5 0 0 0 10 0V30a20 20 0 0 0-40 0v40a30 30 0 0 0 60 0v-30" fill="none" stroke="#007bff" stroke-width="8" class="svg-elem-1-landing"></path>
+                <text x="150" y="75" font-family="Arial, sans-serif" font-size="48" fill="#ffff" font-weight="bold">DailyClips</text>
+            </svg>
+        </header>
+        
+        <main class="landing-main-content">
+            <h1 class="landing-headline">Master English Pronunciation, One Clip at a Time.</h1>
+            <p class="landing-tagline">Practice with short, engaging video clips every day. No ads, no sign-ups, completely free.</p>
+            <a href="app.html" class="landing-cta-button">Start Practicing Now</a>
         </main>
+
+        <footer class="landing-footer">
+            <a href="https://buymeacoffee.com/alvarobuildinpublic" target="_blank" rel="noopener noreferrer" class="bmc-button-landing">
+                <img src="static/images/buymeacoffee.svg" alt="Buy me a coffee">
+                <span>Support the Project</span>
+            </a>
+        </footer>
     </div>
-    <script>
-        let currentVideoIndex = 0; // Global index for tracking video
-        const subtitlesData = [];
-        const savedScores = {};
-        const videoFiles = [
-    'static/videos/BillGatesNvidiaCeoJensenHuangIsCorrectAboutQuantumComputingShorts.mp4',
-    'static/videos/SDarkMatterGunReviewBigPaintballShorts.mp4',
-    'static/videos/SweaterWeatherShortsAnimation.mp4',
-    'static/videos/TommyinnitTriesToKillTechnobladeOnDreamSmpMinecraft.mp4',
-    'static/videos/WestworldIsInsaneShortsMovieWestworld.mp4',
-];
-        
-        function setVideoSource(index) {
-            currentVideoIndex = index;
-            const videoSource = document.getElementById('video-source');
-            videoSource.src = videoFiles[currentVideoIndex];
-            document.getElementById('mainVideo').load(); // Reload the video
-        }
-    
-        // Initialize the first video
-        setVideoSource(currentVideoIndex);
-    
-        console.log('Video files:', videoFiles);
-        console.log('Current video:', videoFiles[currentVideoIndex]);
-    </script>
-    
-    <script src="static/js/asr-client.js"></script>
-    <script src="static/js/video-controls.js"></script>
+<script>
+    // Optional: Re-enable SVG animation on click for landing page
+    const svgLanding = document.getElementById('animated-svg-landing');
+    if (svgLanding) {
+        svgLanding.classList.add('active'); // Start animated
+        svgLanding.addEventListener('click', () => {
+            svgLanding.classList.toggle('active');
+        });
+    }
+</script>
 </body>
 </html>

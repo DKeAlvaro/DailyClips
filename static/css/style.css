@@ -1016,3 +1016,143 @@ body {
 }
 
 /* Header container styles */
+/* Landing Page Specific Styles */
+.landing-page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    text-align: center;
+    padding: 20px;
+    color: var(--text-color);
+    position: relative; /* For z-index stacking if needed */
+    z-index: 1; /* Above background waves */
+}
+
+.landing-header {
+    width: 100%; /* Ensure header takes available width */
+    display: flex;
+    justify-content: center; /* Center the logo (its child) horizontally */
+    align-items: center;   /* Center the logo (its child) vertically if header has specific height */
+    padding-top: 40px; /* Add some space above the logo */
+    margin-bottom: 40px; /* Adjusted from 30px for better balance with top padding */
+}
+
+.landing-header .logo {
+    width: 250px; /* Slightly larger logo for landing */
+    height: auto;
+    margin-left: -15px; /* Move logo slightly to the left */
+}
+
+.landing-main-content {
+    max-width: 700px;
+    margin-bottom: 0px;
+}
+
+.landing-headline {
+    font-size: 2.8em;
+    font-weight: 700;
+    margin-bottom: 20px;
+    line-height: 1.2;
+    text-shadow: 0 2px 15px rgba(74, 158, 255, 0.2);
+}
+
+.landing-tagline {
+    font-size: 1.3em;
+    font-weight: 400;
+    margin-bottom: 40px;
+    line-height: 1.6;
+    opacity: 0.9;
+}
+
+.landing-cta-button {
+    background: var(--accent-color);
+    color: var(--text-color);
+    padding: 18px 40px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-size: 1.2em;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 20px rgba(74, 158, 255, 0.3);
+    display: inline-block; /* Ensure it behaves like a button */
+}
+
+.landing-cta-button:hover {
+    background: #3a8eff; /* Slightly lighter accent */
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 12px 30px rgba(74, 158, 255, 0.4);
+}
+
+.landing-footer {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0px;
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.bmc-button-landing {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(74, 158, 255, 0.2);
+    border-radius: 50px;
+    cursor: pointer;
+    padding: 10px 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+.bmc-button-landing:hover {
+    background: rgba(74, 158, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(74, 158, 255, 0.3);
+}
+
+.bmc-button-landing img {
+    width: 24px;
+    height: auto;
+    filter: invert(1);
+}
+
+.bmc-button-landing span {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* Mobile Responsiveness for Landing Page */
+@media (max-width: 768px) {
+    .landing-header .logo {
+        width: 200px;
+    }
+    .landing-headline {
+        font-size: 2.2em;
+    }
+    .landing-tagline {
+        font-size: 1.1em;
+    }
+    .landing-cta-button {
+        font-size: 1.1em;
+        padding: 15px 35px;
+    }
+    .landing-footer {
+        position: static; /* Change from absolute to static for normal flow */
+        font-size: 0.8em;
+        /* gap: 10px; */ /* User changed base to 0px, only one item now so gap is less relevant */
+        margin-top: 40px;    /* Space above the footer (and BMC button) */
+        margin-bottom: 20px; /* Space below the footer at the end of the page */
+        width: 100%; /* Ensure it takes width to center its content */
+    }
+}
+
+/* Header container styles */
