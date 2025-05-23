@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Daily Clips - Get ready to improve your English pronunciation!">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DailyClips - Introduction</title>
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico">
+    <link rel="stylesheet" href="static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="wave-container">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+    </div>
+
+    <div class="intro-page-container">
+        <audio id="introAudio" src="static/intro.mp3" preload="auto"></audio>
+
+        <div id="transcriptContainer" class="transcript-container">
+            <!-- Transcript will be populated here by JavaScript -->
+        </div>
+
+        <div id="controlsContainer" class="intro-controls-container">
+            <a href="app.html" id="skipIntroButton" class="skip-intro-button">Skip Intro</a>
+            <button id="continueToAppButton" class="continue-to-app-button" style="display: none;">Continue to App</button>
+        </div>
+
+        <div id="progressBarContainer" class="progress-bar-container">
+            <div id="progressBar" class="progress-bar"></div>
+        </div>
+
+    </div>
+
+    <script src="static/js/intro-animation.js"></script>
+</body>
+</html> 

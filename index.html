@@ -19,25 +19,25 @@
     <div class="landing-page-container">
         <header class="landing-header">
             <svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 400 120" class="active logo" id="animated-svg-landing">
-                <style>
+                    <style>
                     .svg-elem-1-landing { /* Unique class for landing page SVG animation if needed */
-                        stroke-dashoffset: 541.9140625px;
-                        stroke-dasharray: 541.9140625px;
-                        transition: stroke-dashoffset 1s cubic-bezier(0.47, 0, 0.745, 0.715) 0s;
-                    }
+                            stroke-dashoffset: 541.9140625px;
+                            stroke-dasharray: 541.9140625px;
+                                    transition: stroke-dashoffset 1s cubic-bezier(0.47, 0, 0.745, 0.715) 0s;
+                        }
                     svg.active .svg-elem-1-landing {
-                        stroke-dashoffset: 0;
-                    }
-                </style>
+                            stroke-dashoffset: 0;
+                        }
+                    </style>
                 <path d="M80 30a20 20 0 0 1 40 0v40a20 20 0 0 1-40 0v-30a10 10 0 0 1 20 0v30a5 5 0 0 0 10 0V30a20 20 0 0 0-40 0v40a30 30 0 0 0 60 0v-30" fill="none" stroke="#007bff" stroke-width="8" class="svg-elem-1-landing"></path>
-                <text x="150" y="75" font-family="Arial, sans-serif" font-size="48" fill="#ffff" font-weight="bold">DailyClips</text>
-            </svg>
+                    <text x="150" y="75" font-family="Arial, sans-serif" font-size="48" fill="#ffff" font-weight="bold">DailyClips</text>
+                </svg>
         </header>
         
         <main class="landing-main-content">
             <h1 class="landing-headline">Master English Pronunciation, One Clip at a Time.</h1>
             <p class="landing-tagline">Practice with short, engaging video clips every day. No ads, no sign-ups, completely free.</p>
-            <a href="app.html" class="landing-cta-button">Start Practicing Now</a>
+            <a href="intro.html" class="landing-cta-button">Start Practicing Now</a>
         </main>
 
         <footer class="landing-footer">
@@ -47,7 +47,7 @@
             </a>
         </footer>
     </div>
-<script>
+    <script>
     // Optional: Re-enable SVG animation on click for landing page
     const svgLanding = document.getElementById('animated-svg-landing');
     if (svgLanding) {
@@ -56,6 +56,6 @@
             svgLanding.classList.toggle('active');
         });
     }
-</script>
+    </script>
 </body>
 </html>

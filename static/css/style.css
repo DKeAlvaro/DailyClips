@@ -1156,3 +1156,141 @@ body {
 }
 
 /* Header container styles */
+
+/* Intro Page Specific Styles */
+.intro-page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Center content vertically */
+    min-height: 100vh;
+    padding: 20px;
+    color: var(--text-color);
+    position: relative;
+    z-index: 1;
+    overflow: hidden; 
+}
+
+.transcript-container {
+    width: 90%;
+    max-width: 800px; /* Wider for larger text */
+    height: auto; /* Let content define height initially */
+    min-height: 200px; /* Minimum space for a few lines */
+    max-height: 70vh; /* Adjust as needed, allows scrolling if text is very long */
+    overflow-y: hidden; /* Will be managed by JS to scroll smoothly, hide direct scrollbar */
+    padding: 10px; /* Minimal padding as there's no box */
+    margin-bottom: 20px;
+    /* Removed background, border from previous box style */
+    font-size: 3.5em; /* Very large font */
+    line-height: 1.4; /* Adjust for large font */
+    text-align: center; /* Center the text lines */
+    color: rgba(255, 255, 255, 0.7); /* Default text color, slightly dimmed */
+    /* scrollbar styles removed as overflow-y is hidden for now */
+    position: relative; /* For positioning words if needed */
+}
+
+.transcript-chunk {
+    display: inline-block; /* Allows opacity and visibility to work correctly with spacing */
+    opacity: 0; /* Initially hidden */
+    visibility: hidden; /* Occupy space but be invisible */
+    transition: opacity 1.2s ease; /* Smooth appearance - ONLY opacity, SLOWER DURATION */
+    margin: 0 0.1em; 
+    padding: 0.1em 0.05em;
+}
+
+.transcript-chunk.visible {
+    opacity: 1;
+    visibility: visible; /* Make it visible */
+}
+
+.transcript-chunk.highlight {
+    color: #ffffff; /* Bright white */
+    font-weight: 700; /* Bolder */
+    text-shadow: 0 0 15px rgba(74, 158, 255, 0.7); /* Glow effect */
+    /* background-color: transparent; */ /* Ensure no background conflicting with glow */
+    transform: scale(1.05); /* Slightly larger when highlighted */
+}
+
+.intro-controls-container {
+    position: fixed; /* Keep controls fixed */
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%); /* Center horizontally */
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    z-index: 1005;
+}
+
+.skip-intro-button, .continue-to-app-button {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    padding: 12px 30px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-size: 1em;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    cursor: pointer;
+}
+
+.skip-intro-button:hover, .continue-to-app-button:hover {
+    background: rgba(74, 158, 255, 0.2);
+    border-color: rgba(74, 158, 255, 0.4);
+    transform: scale(1.05) translateY(-2px);
+}
+
+.continue-to-app-button {
+    background-color: var(--accent-color); /* Make it more prominent */
+    border-color: var(--accent-color);
+}
+.continue-to-app-button:hover {
+     background-color: #3a8eff; /* Lighter accent on hover */
+}
+
+#introAudio {
+    display: none; /* Hide the default audio player controls */
+}
+
+.progress-bar-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 8px; /* Or adjust as needed */
+    background-color: rgba(0, 0, 0, 0.2);
+    z-index: 1004;
+}
+
+.progress-bar {
+    width: 0%; /* Initial width */
+    height: 100%;
+    background-color: var(--accent-color);
+    transition: width 0.1s linear; /* Smooth progress update */
+    border-radius: 0 2px 2px 0; /* Slight rounding */
+}
+
+/* Mobile responsiveness for Intro Page - Adjustments */
+@media (max-width: 768px) {
+    .transcript-container {
+        font-size: 2em; /* Adjust font size for mobile */
+        line-height: 1.5;
+        max-width: 95%;
+        min-height: 150px;
+    }
+    .intro-controls-container {
+        bottom: 20px;
+        gap: 15px;
+    }
+    .skip-intro-button, .continue-to-app-button {
+        font-size: 0.9em;
+        padding: 10px 20px;
+    }
+     .progress-bar-container {
+        height: 6px;
+    }
+}
+
+/* Header container styles */
