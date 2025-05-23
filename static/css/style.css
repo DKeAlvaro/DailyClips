@@ -1193,9 +1193,18 @@ body {
     display: inline-block; /* Allows opacity and visibility to work correctly with spacing */
     opacity: 0; /* Initially hidden */
     visibility: hidden; /* Occupy space but be invisible */
-    transition: opacity 1.2s ease; /* Smooth appearance - ONLY opacity, SLOWER DURATION */
+    transition: opacity 1.2s ease, 
+                color 0.4s ease, 
+                font-weight 0.4s ease, 
+                text-shadow 0.4s ease, 
+                transform 0.4s ease; /* Added transitions for highlight properties */
     margin: 0 0.1em; 
     padding: 0.1em 0.05em;
+    /* Base styling for properties that will be transitioned by .highlight */
+    color: rgba(255, 255, 255, 0.7); /* Explicitly set base color for transition */
+    font-weight: 400; /* Explicitly set base font-weight */
+    text-shadow: none; /* Explicitly set base text-shadow */
+    transform: scale(1); /* Explicitly set base scale */
 }
 
 .transcript-chunk.visible {
